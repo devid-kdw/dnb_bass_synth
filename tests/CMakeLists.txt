@@ -60,6 +60,21 @@ else()
 endif()
 catch_discover_tests(domain_tests)
 
+add_executable(engine_tests
+    engine/test_note_stack.cpp
+    engine/test_voice_allocator.cpp
+    engine/test_regression.cpp
+)
+target_include_directories(engine_tests PRIVATE ../src)
+target_link_libraries(engine_tests PRIVATE Catch2::Catch2WithMain)
+
+if(DEFINED DNB_CATCH2_EXTRAS_DIR AND EXISTS "${DNB_CATCH2_EXTRAS_DIR}/Catch.cmake")
+  include("${DNB_CATCH2_EXTRAS_DIR}/Catch.cmake")
+else()
+  include(Catch)
+endif()
+catch_discover_tests(engine_tests)
+
 add_executable(dsp_tests
     dsp/test_anti_click.cpp
     dsp/test_dc_blocker.cpp

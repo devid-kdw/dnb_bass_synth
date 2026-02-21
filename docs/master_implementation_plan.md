@@ -28,7 +28,7 @@ If conflict exists, no implementation proceeds before resolution and ADR note.
 | P1 | Domain Constraint Core | Done | Backend/DSP | P0 | `src/domain/*` constraints, tests |
 | P2 | DSP Core Primitives | Done | Backend/DSP | P1 | `src/dsp/core/*`, `src/dsp/safety/*` |
 | P3 | Osc/Filter/Nonlinear DSP | Done | Backend/DSP | P2 | `src/dsp/osc/*`, `src/dsp/filters/*`, `src/dsp/dist/*` |
-| P4 | Voice/Engine Orchestration | Planned | Backend/DSP | P3 | `src/engine/*` deterministic voice path |
+| P4 | Voice/Engine Orchestration | Done | Backend/DSP | P3 | `src/engine/*` deterministic voice path |
 | P5 | App Wiring + Macro UI | Planned | Frontend/UI + Backend | P1, P4 | `src/app/*`, `src/ui/*` bound to domain |
 | P6 | Preset/State/Migration | Planned | Backend/DSP | P5 | `src/preset/*`, state migration tests |
 | P7 | QA + Render + Bench | Planned | Backend/DSP + Orchestrator | P6 | `tests/*`, `bench/*`, QA reports |
@@ -230,6 +230,8 @@ Required handoff packet from agent:
 | 2026-02-21 | P3 (Remediation) | Backend/DSP + Frontend/UI + Orchestrator | Review -> Done | Remediation accepted, tests pass (17/17) and P3 header smoke compile passes; closure report in `docs/qa/p3_remediation_final_review.md` | Start P4 backend and continue frontend support |
 | 2026-02-21 | Alignment (D-001/002/003) | Backend/DSP + TechStack/Repo + Orchestrator | In Progress -> Review | Alignment remediation reviewed in `docs/qa/alignment_remediation_review.md`; D-003 closed, D-001/D-002 partially unresolved | Close remaining alignment findings before P4 |
 | 2026-02-21 | Alignment (F-ALIGN-001/002/003) | Backend/DSP + TechStack/Repo + Orchestrator | Review -> Done | Final review accepted in `docs/qa/alignment_remediation_final_review.md`; submodule pinning, strict test dependency policy, and RT-safe oversampler path verified | Unblock P4 and start engine orchestration |
+| 2026-02-21 | P4 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Review | P4 handoff reviewed in `docs/qa/p4_review.md`; major RT/correctness findings identified (`F-P4-001`, `F-P4-002`) and one requirement gap (`F-P4-003`) | Backend submits P4 remediation patch, then re-review for P5 gate |
+| 2026-02-21 | P4 (Remediation) | Backend/DSP + Frontend/UI + Orchestrator | Review -> Done | Remediation accepted in `docs/qa/p4_remediation_final_review.md`; RT-safe NoteStack, voice truncation fix, morph surface, and engine regression tests validated (`21/21`) | Start P5 app wiring + macro UI integration |
 
 ## 8. Open Risks and Blockers
 | ID | Type | Description | Impact | Mitigation | Owner | Status |
@@ -245,8 +247,11 @@ Required handoff packet from agent:
 | R-009 | RT-Safety | `Oversampler` can resize internal buffers in processing path (`getUpBuffer`/`processUp`) | High | Remove runtime resize and enforce preallocation from `prepare()` | Backend/DSP | Closed |
 | R-010 | Reproducibility | `.gitmodules` declared but extern submodules are not pinned as gitlinks in repo index | High | Commit proper extern submodule gitlinks and verify clean configure path | TechStack/Repo | Closed |
 | R-011 | Build Policy | Tests CMake allows binary-dir Catch2 fallback from `_deps`, weakening strict submodule-first policy | Medium | Remove fallback or gate behind explicit opt-in compat flag | TechStack/Repo | Closed |
+| R-012 | RT-Safety | `NoteStack` can trigger `std::vector` growth during `insert(begin, ...)` before cap enforcement | High | Refactor to no-allocation fixed-capacity behavior and add stress test | Backend/DSP | Closed |
+| R-013 | Audio Correctness | `Voice::processBlock` hard-truncates blocks above `1024` due fixed local buffer and zero-tail fill | High | Preallocate voice-owned buffer from `prepare(maxBlockSize)` and process full block | Backend/DSP | Closed |
+| R-014 | Contract Gap | P4 required style-mode morph handling not exposed in engine path yet | Medium | Implement engine morph state/progress surface or approve explicit defer note before P5 | Backend/DSP + Orchestrator | Closed |
 
 ## 9. Next Delegation Queue
-1. Start `P4 - Voice/Engine Orchestration` (backend primary owner).
-2. Keep frontend on support/scaffold tasks until P5 integration gate.
-3. At P4 handoff, run focused note lifecycle and click-regression QA before P5.
+1. Start `P5 - App Wiring + Macro UI` with frozen engine/state surfaces from P4.
+2. Backend and frontend sync on APVTS/state exposure contract before runtime binding.
+3. Hold P5 gate on domain-bound binding checks and automation ID stability.
