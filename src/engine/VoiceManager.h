@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../domain/ConstraintEngine.h"
 #include "NoteStack.h"
 #include "Voice.h"
 
@@ -14,6 +15,10 @@ public:
   void prepare(double sampleRate, size_t maxBlockSize) {
     voice.prepare(sampleRate, maxBlockSize);
     noteStack.clear();
+  }
+
+  void setParameters(const domain::ResolvedParams &params) {
+    voice.setParameters(params);
   }
 
   void noteOn(int noteNumber, float velocity) {

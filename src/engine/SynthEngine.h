@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../domain/ConstraintEngine.h"
 #include "VoiceManager.h"
 #include <algorithm>
 #include <cmath>
@@ -22,6 +23,10 @@ public:
     charBuffer.resize(maxBlockSize, 0.0f);
 
     voiceManager.prepare(sampleRate, maxBlockSize);
+  }
+
+  void setParameters(const domain::ResolvedParams &params) {
+    voiceManager.setParameters(params);
   }
 
   void processMidiEvent(int noteNumber, float velocity, bool isNoteOn) {
@@ -60,10 +65,19 @@ public:
 
     // Simple mixing strategy
     float subGain = 1.0f;
-    float charGain = 0.8f; // Mixed slightly lower
+
+    // Style morph modulates the character voice presence
+    // Morph 0.0 = base character gain (0.8f)
+    // Morph 1.0 = boosted presence/drive character (e.g. 1.5f)
+    float baseCharGain = 0.8f;
+    float maxCharGain = 1.5f;
+    float charGain =
+        baseCharGain + (currentStyleMorph * (maxCharGain - baseCharGain));
 
     for (size_t i = 0; i < clampedSamples; ++i) {
-      float mix = (subBuffer[i] * subGain) + (charBuffer[i] * charGain);
+      // Hard clip applied to character before mix to prevent it blowing up mix
+      float processedChar = std::clamp(charBuffer[i] * charGain, -1.0f, 1.0f);
+      float mix = (subBuffer[i] * subGain) + processedChar;
       outL[i] = mix;
       outR[i] = mix;
     }

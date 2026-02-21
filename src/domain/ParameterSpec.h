@@ -13,6 +13,10 @@ struct ParamDesc {
   bool isDiscrete;
 };
 
+// Global Style Category
+constexpr ParamDesc styleMode{"style.mode", "Style Mode", 0.0f,
+                              2.0f,         0.0f,         true};
+
 // Sub Engine
 constexpr ParamDesc subShape{"sub.shape", "Sub Osc Shape", 0.0f, 1.0f, 0.0f,
                              true};
@@ -42,5 +46,7 @@ constexpr ParamDesc macroRollerDyn{
     "macro.roller_dynamics", "Roller Dynamics", 0.0f, 1.0f, 0.0f, false};
 constexpr ParamDesc macroLiquidDepth{
     "macro.liquid_depth", "Liquid Depth", 0.0f, 1.0f, 0.0f, false};
+constexpr ParamDesc macroStyleMorph{
+    "macro.style_morph", "Style Morph", 0.0f, 1.0f, 0.0f, false};
 
 } // namespace dnb::domain::parameters

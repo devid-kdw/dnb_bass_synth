@@ -45,6 +45,7 @@ endif()
 add_executable(domain_tests
     unit/test_parameter_ranges.cpp
     unit/test_macro_constraints.cpp
+    unit/test_p5_round2.cpp
     unit/test_style_modes.cpp
     ../src/domain/ConstraintEngine.cpp
 )
@@ -64,6 +65,8 @@ add_executable(engine_tests
     engine/test_note_stack.cpp
     engine/test_voice_allocator.cpp
     engine/test_regression.cpp
+    engine/test_p5_round3.cpp
+    ../src/domain/ConstraintEngine.cpp
 )
 target_include_directories(engine_tests PRIVATE ../src)
 target_link_libraries(engine_tests PRIVATE Catch2::Catch2WithMain)

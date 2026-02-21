@@ -20,9 +20,14 @@ ResolvedParams ConstraintEngine::process(const RawInputParams &input) const {
   const float fmRatioTarget = macros::applyFmMetal(input.macroFmMetal);
   const float liquidVal = macros::applyLiquidDepth(input.macroLiquidDepth);
 
-  // TODO: F-003 Defer macroRollerDynamics wiring to P3/P4 when Filter resonance
-  // and Env depth targets are implemented in ResolvedParams.
-  // const float rollerVal = macros::applyRollerDyn(input.macroRollerDynamics);
+  // Roller dynamics wiring (F-P5R2-001)
+  const float rollerVal = macros::applyRollerDyn(input.macroRollerDynamics);
+
+  out.filterCutoff = neuroOut.filterCutoffTarget;
+
+  // Roller dynamics modulates the cutoff (provides energy/movement)
+  // Shift by up to 1kHz
+  out.filterCutoff += rollerVal * 2000.0f;
 
   // 5. Build outputs from macros with clamping
   out.xoverFreq = limits::clampCrossover(limits::defaultCrossoverHz +
@@ -36,7 +41,6 @@ ResolvedParams ConstraintEngine::process(const RawInputParams &input) const {
     out.fmRatio = limits::defaultFMRatio;
   }
 
-  out.filterCutoff = neuroOut.filterCutoffTarget;
   out.distAmount = neuroOut.distAmount;
 
   // 5b. Liquid depth modifies character path

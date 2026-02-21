@@ -1,20 +1,22 @@
 #pragma once
+#include "../theme/Theme.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace dnb_bass {
 namespace ui {
 
-// Placeholder for the Oscilloscope and Spectrum Analyzer (Real-time FFT/Wave)
-// as required by the supplementary specification for visual feedback.
-class VisualFeedbackPlaceholder : public juce::Component {
+// A mock view representing the Oscilloscope/Spectrum Analyzer.
+// Since backend did not deliver the FIFOs, this just paints a static mock
+// representation
+class VisualFeedbackView : public juce::Component {
 public:
-  VisualFeedbackPlaceholder() {
+  VisualFeedbackView() {
     addAndMakeVisible(infoLabel);
     infoLabel.setText("[ DSP Visualization Area: FFT & Wavefold Notch Paths ]",
                       juce::dontSendNotification);
     infoLabel.setJustificationType(juce::Justification::centred);
     infoLabel.setFont(juce::FontOptions(14.0f, juce::Font::italic));
-    infoLabel.setColour(juce::Label::textColourId, juce::Colour(0xff888888));
+    infoLabel.setColour(juce::Label::textColourId, Theme::textSecondary);
   }
 
   void resized() override { infoLabel.setBounds(getLocalBounds()); }
@@ -27,7 +29,7 @@ public:
     g.fillRoundedRectangle(bounds, 6.0f);
 
     // Mock sub wave (pure sine)
-    g.setColour(juce::Colour(0xff00b0ff).withAlpha(0.6f));
+    g.setColour(Theme::accentTech.withAlpha(0.6f));
     g.drawRoundedRectangle(bounds.reduced(1.0f), 6.0f, 1.0f);
 
     // Draw a simulated static sine wave center line
@@ -38,6 +40,8 @@ public:
 
 private:
   juce::Label infoLabel;
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VisualFeedbackView)
 };
 
 } // namespace ui

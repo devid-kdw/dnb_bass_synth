@@ -1,11 +1,15 @@
 #pragma once
 
+#include "../domain/ConstraintEngine.h"
+#include "../domain/DnBLimits.h"
 #include "../dsp/dist/Saturator.h"
 #include "../dsp/dist/Wavefolder.h"
 #include "../dsp/filters/CrossoverLR4.h"
 #include "../dsp/filters/StateVariableFilter.h"
 #include "../dsp/osc/CharacterOscillator.h"
 #include "../dsp/osc/SubOscillator.h"
+#include <algorithm>
+#include <cmath>
 #include <vector>
 
 namespace dnb::engine {
@@ -31,6 +35,9 @@ public:
 
     charBuffer.resize(maxBlockSize, 0.0f);
 
+    currentParams = defaultResolvedParams();
+    setParameters(currentParams);
+
     state = State::Idle;
     envVal = 0.0f;
   }
@@ -44,7 +51,7 @@ public:
     charOsc.setFrequency(freq);
 
     // Phase lock only on distinct note-on triggers (not legato morphs)
-    subOsc.resetPhase();
+    subOsc.resetPhase(currentParams.subPhase);
     charOsc.resetPhase();
 
     state = State::Attack;
@@ -59,6 +66,21 @@ public:
 
   void noteOff() { state = State::Release; }
 
+  void setParameters(const domain::ResolvedParams &params) {
+    currentParams = params;
+    crossover.setFrequency(params.xoverFreq);
+    charOsc.setFMRatio(params.fmRatio);
+    charOsc.setFMDepth(std::clamp(0.2f + (params.distAmount * 0.6f), 0.0f, 1.0f));
+
+    const float drive = 1.0f + (params.distAmount * 5.0f) + (params.ottDepth * 2.0f);
+    saturator.setParameters(dsp::dist::Saturator::Type::SoftClip, drive);
+
+    const float safeCutoff = std::clamp(params.filterCutoff, 40.0f, 8000.0f);
+    const float resonance = std::clamp(0.15f + params.ottDepth * 0.6f, 0.0f, 0.95f);
+    svf.setParameters(dsp::filters::StateVariableFilter::Mode::LowPass, safeCutoff,
+                      resonance);
+  }
+
   void processBlock(float *subOut, float *charOut, size_t numSamples) {
     if (state == State::Idle) {
       for (size_t i = 0; i < numSamples; ++i) {
@@ -68,9 +90,15 @@ public:
       return;
     }
 
-    // A fast block-level envelope to prevent harsh clicking.
-    float attackIncr = 1.0f / static_cast<float>(sampleRate * 0.005);  // 5ms
-    float releaseDecr = 1.0f / static_cast<float>(sampleRate * 0.015); // 15ms
+    // A fast block-level envelope to prevent harsh clicking, driven by domain
+    // params. Ensure we don't divide by zero if a parameter somehow bypasses
+    // domain clamp.
+    float safeAttack = std::max(0.1f, currentParams.ampAttack);
+    float safeRelease = std::max(1.0f, currentParams.ampRelease);
+    float attackIncr =
+        1.0f / static_cast<float>(sampleRate * (safeAttack / 1000.0f));
+    float releaseDecr =
+        1.0f / static_cast<float>(sampleRate * (safeRelease / 1000.0f));
 
     // Run the block processors that support block processing
     // Character path needs intermediate buffer
@@ -98,6 +126,13 @@ public:
       float subS = subOsc.process();
       float charS = charBuffer[i];
 
+      // Macro/style-controlled tone shaping on character path.
+      charS = svf.process(charS);
+      const float ottDrive = 1.0f + (currentParams.ottDepth * 5.0f);
+      const float ottWet = currentParams.ottDepth;
+      const float ottProcessed = std::tanh(charS * ottDrive);
+      charS = (charS * (1.0f - ottWet)) + (ottProcessed * ottWet);
+
       // Use crossover to high-pass the character band so it doesn't clash with
       // sub
       float dummyLow, charHigh;
@@ -120,11 +155,25 @@ public:
   [[nodiscard]] int getNote() const { return currentNote; }
 
 private:
+  static domain::ResolvedParams defaultResolvedParams() {
+    return domain::ResolvedParams{
+        dnb::domain::limits::defaultAttackMs,
+        dnb::domain::limits::defaultReleaseMs,
+        dnb::domain::limits::subPhaseLockDeg,
+        dnb::domain::limits::defaultCrossoverHz,
+        dnb::domain::limits::defaultFMRatio,
+        dnb::domain::limits::defaultOttMix,
+        1000.0f,
+        0.0f};
+  }
+
   double sampleRate = 44100.0;
   State state = State::Idle;
   int currentNote = -1;
   float currentVelocity = 0.0f;
   float envVal = 0.0f;
+
+  domain::ResolvedParams currentParams;
 
   dsp::osc::SubOscillator subOsc;
   dsp::osc::CharacterOscillator charOsc;

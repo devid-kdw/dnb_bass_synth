@@ -50,4 +50,33 @@ TEST_CASE("SynthEngine Style Morph Surface", "[engine]") {
     REQUIRE(engine.getStyleMorph() > 0.0f);
     REQUIRE(engine.getStyleMorph() < 1.0f);
   }
+
+  SECTION("Morph alters audio output render") {
+    std::vector<float> L1(256, 0.0f), R1(256, 0.0f);
+    std::vector<float> L2(256, 0.0f), R2(256, 0.0f);
+
+    engine.reset();
+    engine.processMidiEvent(60, 1.0f, true); // Note on to ensure signal
+
+    // Render with morph = 0.0
+    engine.startStyleMorph(0.0f);
+    for (int i = 0; i < 10; ++i)
+      engine.updateStyleMorphProgress(); // settle
+    engine.processBlock(L1.data(), R1.data(), 256);
+
+    engine.reset();
+    engine.processMidiEvent(60, 1.0f, true);
+    // Render with morph = 1.0
+    engine.startStyleMorph(1.0f);
+    for (int i = 0; i < 100; ++i)
+      engine.updateStyleMorphProgress(); // settle
+    engine.processBlock(L2.data(), R2.data(), 256);
+
+    // There should be a measurable difference in the output
+    float diffSum = 0.0f;
+    for (size_t i = 0; i < 256; ++i) {
+      diffSum += std::abs(L1[i] - L2[i]);
+    }
+    REQUIRE(diffSum > 0.0001f);
+  }
 }

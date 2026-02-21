@@ -15,7 +15,7 @@ inline std::string_view getModeName(Mode mode) {
   case Mode::Tech:
     return "Tech";
   case Mode::Neuro:
-    return "Neurofunk";
+    return "Neuro";
   case Mode::Dark:
     return "Dark";
   default:

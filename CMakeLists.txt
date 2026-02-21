@@ -56,6 +56,8 @@ if(DNB_ENABLE_PLUGIN_TARGET)
       target_sources(DnBBassSynth PRIVATE
         src/app/PluginProcessor.cpp
         src/app/PluginEditor.cpp
+        src/domain/ConstraintEngine.cpp
+        src/ui/theme/Theme.cpp
       )
 
       target_include_directories(DnBBassSynth PRIVATE

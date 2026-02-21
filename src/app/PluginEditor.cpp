@@ -1,24 +1,26 @@
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
 
-DnBBassSynthAudioProcessorEditor::DnBBassSynthAudioProcessorEditor(DnBBassSynthAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p)
-{
-    setSize(640, 360);
+DnBBassSynthAudioProcessorEditor::DnBBassSynthAudioProcessorEditor(
+    DnBBassSynthAudioProcessor &p)
+    : AudioProcessorEditor(&p), audioProcessor(p) {
+  addAndMakeVisible(mainLayout);
+  setSize(800, 600);
+
+  // Initialize standard bindings tying the UI strictly to Domain/APVTS
+  // parameters
+  bindingLayer = std::make_unique<dnb_bass::ui::BindingLayer>(
+      audioProcessor.getApvts(), mainLayout.getMacroPanel(),
+      mainLayout.getStyleMorphControl(), mainLayout.getStyleSelector());
 }
 
 DnBBassSynthAudioProcessorEditor::~DnBBassSynthAudioProcessorEditor() = default;
 
-void DnBBassSynthAudioProcessorEditor::paint(juce::Graphics& g)
-{
-    juce::ignoreUnused(audioProcessor);
-
-    g.fillAll(juce::Colour::fromRGB(18, 18, 18));
-    g.setColour(juce::Colours::white);
-    g.setFont(18.0f);
-    g.drawFittedText("DnB Bass Synth (alignment baseline)", getLocalBounds(), juce::Justification::centred, 1);
+void DnBBassSynthAudioProcessorEditor::paint(juce::Graphics &g) {
+  // Painting is handled by child components recursively via MainLayout
+  juce::ignoreUnused(g, audioProcessor);
 }
 
-void DnBBassSynthAudioProcessorEditor::resized()
-{
+void DnBBassSynthAudioProcessorEditor::resized() {
+  mainLayout.setBounds(getLocalBounds());
 }
