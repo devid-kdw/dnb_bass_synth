@@ -72,4 +72,6 @@ Any major deviation requires ADR before merge.
 - `docs/agent_briefs/backend_dsp_phase_tasklist.md` (phase-by-phase execution tasks)
 - `docs/agent_briefs/backend_dsp_agent_prompt.md` (copy/paste startup prompt)
 - `docs/agent_briefs/backend_dsp_p1_fix_prompt.md` (P1 remediation prompt)
+- `docs/agent_briefs/backend_dsp_p2_fix_tasklist.md` (P2 remediation tasklist)
+- `docs/agent_briefs/backend_dsp_p2_fix_prompt.md` (P2 remediation prompt)
 - `docs/master_implementation_plan.md` (current phase status and global gates)

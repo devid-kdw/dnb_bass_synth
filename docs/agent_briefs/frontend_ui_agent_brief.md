@@ -73,4 +73,6 @@ If requested feature conflicts with source-of-truth docs, raise conflict explici
 - `docs/agent_briefs/frontend_ui_phase_tasklist.md` (phase-by-phase execution tasks)
 - `docs/agent_briefs/frontend_ui_agent_prompt.md` (copy/paste startup prompt)
 - `docs/agent_briefs/frontend_ui_p1_fix_prompt.md` (P1 remediation prompt)
+- `docs/agent_briefs/frontend_ui_p2_fix_tasklist.md` (P2 conditional alignment tasklist)
+- `docs/agent_briefs/frontend_ui_p2_fix_prompt.md` (P2 conditional alignment prompt)
 - `docs/master_implementation_plan.md` (current phase status and global gates)

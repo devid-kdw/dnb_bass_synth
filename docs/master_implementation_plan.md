@@ -26,7 +26,7 @@ If conflict exists, no implementation proceeds before resolution and ADR note.
 |---|---|---|---|---|---|
 | P0 | Foundation Setup | Done | Orchestrator | None | repo skeleton, rules, plans, briefs |
 | P1 | Domain Constraint Core | Done | Backend/DSP | P0 | `src/domain/*` constraints, tests |
-| P2 | DSP Core Primitives | Planned | Backend/DSP | P1 | `src/dsp/core/*`, `src/dsp/safety/*` |
+| P2 | DSP Core Primitives | Done | Backend/DSP | P1 | `src/dsp/core/*`, `src/dsp/safety/*` |
 | P3 | Osc/Filter/Nonlinear DSP | Planned | Backend/DSP | P2 | `src/dsp/osc/*`, `src/dsp/filters/*`, `src/dsp/dist/*` |
 | P4 | Voice/Engine Orchestration | Planned | Backend/DSP | P3 | `src/engine/*` deterministic voice path |
 | P5 | App Wiring + Macro UI | Planned | Frontend/UI + Backend | P1, P4 | `src/app/*`, `src/ui/*` bound to domain |
@@ -224,6 +224,8 @@ Required handoff packet from agent:
 | 2026-02-21 | P1 | Backend/DSP + Orchestrator | Planned -> Review | Domain layer + tests delivered and validated (5/5 pass), review findings logged in `docs/qa/backend_p1_review.md` | Fix review findings, resubmit P1 |
 | 2026-02-21 | P1 (Frontend support) | Frontend/UI + Orchestrator | Planned -> Review | Contract-alignment handoff reviewed; findings logged in `docs/qa/frontend_p1_review.md` | Reconcile schema/style/macro contract with backend before P5 |
 | 2026-02-21 | P1 (Remediation) | Backend/DSP + Frontend/UI + Orchestrator | Review -> Done | Remediation accepted, tests pass, closure report in `docs/qa/p1_remediation_final_review.md` | Start P2 backend and keep frontend scaffold track |
+| 2026-02-21 | P2 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Review | P2 delivered by both agents; review logged in `docs/qa/p2_review.md`, backend portability blocker found in `src/dsp/core/DenormalFlush.h` | Backend submits P2 portability+coverage fix, then re-review |
+| 2026-02-21 | P2 (Remediation) | Backend/DSP + Frontend/UI + Orchestrator | Review -> Done | Remediation accepted, tests pass (11/11) and portability smoke compile passes; closure report in `docs/qa/p2_remediation_final_review.md` | Start P3 backend and continue frontend scaffold support |
 
 ## 8. Open Risks and Blockers
 | ID | Type | Description | Impact | Mitigation | Owner | Status |
@@ -233,8 +235,9 @@ Required handoff packet from agent:
 | R-003 | Quality | State migration regressions across versions | Medium | Version-tagged migration tests in P6 | Backend/DSP | Open |
 | R-004 | Spec Alignment | P1 style/FM domain set diverges from documented MVP curated constraints | Medium | Resolve in P1 rework before marking phase Done | Backend/DSP + Orchestrator | Closed |
 | R-005 | Contract | Frontend-backend mismatch in parameter IDs, macro set size, and style-set expectation | High | Create and sign off shared schema freeze artifact before P5 | Backend/DSP + Frontend/UI + Orchestrator | Closed |
+| R-006 | Portability | `src/dsp/core/DenormalFlush.h` uses unconditional x86 intrinsics include and fails on non-x86 builds | High | Add architecture guards + no-op fallback + coverage test in P2 fix patch | Backend/DSP | Closed |
 
 ## 9. Next Delegation Queue
-1. Start backend `P2 - DSP Core Primitives` implementation.
-2. Keep frontend on scaffold/support tasks for P2-P4 until P5 integration gate.
+1. Start backend `P3 - Osc/Filter/Nonlinear DSP` implementation.
+2. Keep frontend on scaffold/support tasks for P3-P4 until P5 integration gate.
 3. Before P5, reconfirm schema contract with a short checkpoint review.
