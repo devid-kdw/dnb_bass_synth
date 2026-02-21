@@ -27,7 +27,7 @@ If conflict exists, no implementation proceeds before resolution and ADR note.
 | P0 | Foundation Setup | Done | Orchestrator | None | repo skeleton, rules, plans, briefs |
 | P1 | Domain Constraint Core | Done | Backend/DSP | P0 | `src/domain/*` constraints, tests |
 | P2 | DSP Core Primitives | Done | Backend/DSP | P1 | `src/dsp/core/*`, `src/dsp/safety/*` |
-| P3 | Osc/Filter/Nonlinear DSP | Planned | Backend/DSP | P2 | `src/dsp/osc/*`, `src/dsp/filters/*`, `src/dsp/dist/*` |
+| P3 | Osc/Filter/Nonlinear DSP | Done | Backend/DSP | P2 | `src/dsp/osc/*`, `src/dsp/filters/*`, `src/dsp/dist/*` |
 | P4 | Voice/Engine Orchestration | Planned | Backend/DSP | P3 | `src/engine/*` deterministic voice path |
 | P5 | App Wiring + Macro UI | Planned | Frontend/UI + Backend | P1, P4 | `src/app/*`, `src/ui/*` bound to domain |
 | P6 | Preset/State/Migration | Planned | Backend/DSP | P5 | `src/preset/*`, state migration tests |
@@ -226,6 +226,8 @@ Required handoff packet from agent:
 | 2026-02-21 | P1 (Remediation) | Backend/DSP + Frontend/UI + Orchestrator | Review -> Done | Remediation accepted, tests pass, closure report in `docs/qa/p1_remediation_final_review.md` | Start P2 backend and keep frontend scaffold track |
 | 2026-02-21 | P2 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Review | P2 delivered by both agents; review logged in `docs/qa/p2_review.md`, backend portability blocker found in `src/dsp/core/DenormalFlush.h` | Backend submits P2 portability+coverage fix, then re-review |
 | 2026-02-21 | P2 (Remediation) | Backend/DSP + Frontend/UI + Orchestrator | Review -> Done | Remediation accepted, tests pass (11/11) and portability smoke compile passes; closure report in `docs/qa/p2_remediation_final_review.md` | Start P3 backend and continue frontend scaffold support |
+| 2026-02-21 | P3 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Review | P3 delivered by both agents; review logged in `docs/qa/p3_review.md`, backend compile/integration blockers found in P3 modules | Backend submits P3 fix patch and re-review |
+| 2026-02-21 | P3 (Remediation) | Backend/DSP + Frontend/UI + Orchestrator | Review -> Done | Remediation accepted, tests pass (17/17) and P3 header smoke compile passes; closure report in `docs/qa/p3_remediation_final_review.md` | Start P4 backend and continue frontend support |
 
 ## 8. Open Risks and Blockers
 | ID | Type | Description | Impact | Mitigation | Owner | Status |
@@ -236,8 +238,10 @@ Required handoff packet from agent:
 | R-004 | Spec Alignment | P1 style/FM domain set diverges from documented MVP curated constraints | Medium | Resolve in P1 rework before marking phase Done | Backend/DSP + Orchestrator | Closed |
 | R-005 | Contract | Frontend-backend mismatch in parameter IDs, macro set size, and style-set expectation | High | Create and sign off shared schema freeze artifact before P5 | Backend/DSP + Frontend/UI + Orchestrator | Closed |
 | R-006 | Portability | `src/dsp/core/DenormalFlush.h` uses unconditional x86 intrinsics include and fails on non-x86 builds | High | Add architecture guards + no-op fallback + coverage test in P2 fix patch | Backend/DSP | Closed |
+| R-007 | Integration | P3 modules (`StateVariableFilter`, `Saturator`, `Wavefolder`) are not compile-covered and currently fail include resolution in smoke compile | High | Fix include paths, add compile coverage/tests, rerun review gates | Backend/DSP | Closed |
+| R-008 | DSP Correctness | `CrossoverLR4` HP denominator coefficients are used in process but not assigned in `setFrequency` | High | Assign HP denominator terms and add frequency-response assertions in tests | Backend/DSP | Closed |
 
 ## 9. Next Delegation Queue
-1. Start backend `P3 - Osc/Filter/Nonlinear DSP` implementation.
-2. Keep frontend on scaffold/support tasks for P3-P4 until P5 integration gate.
+1. Start backend `P4 - Voice/Engine Orchestration` implementation.
+2. Keep frontend on scaffold/support tasks for P4 until P5 integration gate.
 3. Before P5, reconfirm schema contract with a short checkpoint review.

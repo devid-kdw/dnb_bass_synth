@@ -29,6 +29,12 @@ add_executable(dsp_tests
     dsp/test_smoother.cpp
     dsp/test_denormal_flush.cpp
     dsp/test_sanity_check.cpp
+    dsp/test_sub_phase_lock.cpp
+    dsp/test_character_osc.cpp
+    dsp/test_crossover_lr4.cpp
+    dsp/test_state_variable_filter.cpp
+    dsp/test_saturator.cpp
+    dsp/test_wavefolder.cpp
 )
 
 target_include_directories(dsp_tests PRIVATE ../src)

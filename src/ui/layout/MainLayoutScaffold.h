@@ -4,6 +4,7 @@
 
 #include "../components/MacroPanelPlaceholder.h"
 #include "../components/StyleSelectorPlaceholder.h"
+#include "../components/VisualFeedbackPlaceholder.h"
 
 namespace dnb_bass {
 namespace ui {
@@ -19,6 +20,7 @@ public:
     headerLabel.setJustificationType(juce::Justification::centred);
 
     addAndMakeVisible(styleSelector);
+    addAndMakeVisible(visualFeedback);
     addAndMakeVisible(macroPanel);
   }
 
@@ -32,7 +34,11 @@ public:
     // Style Selector
     styleSelector.setBounds(bounds.removeFromTop(40).withWidth(300).withX(
         bounds.getX() + (bounds.getWidth() - 300) / 2));
-    bounds.removeFromTop(40);
+    bounds.removeFromTop(20);
+
+    // Visual Feedback Area
+    visualFeedback.setBounds(bounds.removeFromTop(120));
+    bounds.removeFromTop(20);
 
     // Macros
     macroPanel.setBounds(bounds.removeFromTop(150));
@@ -45,6 +51,7 @@ public:
 private:
   juce::Label headerLabel;
   StyleSelectorPlaceholder styleSelector;
+  VisualFeedbackPlaceholder visualFeedback;
   MacroPanelPlaceholder macroPanel;
 };
 
