@@ -1,0 +1,21 @@
+[submodule "extern/juce"]
+	path = extern/juce
+	url = https://github.com/juce-framework/JUCE.git
+[submodule "extern/catch2"]
+	path = extern/catch2
+	url = https://github.com/catchorg/Catch2.git
+[submodule "extern/json"]
+	path = extern/json
+	url = https://github.com/nlohmann/json.git
+[submodule "extern/hiir"]
+	path = extern/hiir
+	url = https://github.com/unevens/hiir.git
+[submodule "extern/spdlog"]
+	path = extern/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "extern/clap-cleveraudio"]
+	path = extern/clap-cleveraudio
+	url = https://github.com/free-audio/clap.git
+[submodule "extern/benchmark"]
+	path = extern/benchmark
+	url = https://github.com/google/benchmark.git

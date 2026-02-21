@@ -1,0 +1,5 @@
+if(EXISTS "/Users/grzzi/Desktop/dnb_bass_synth/build_clean_alignment_fix/tests/domain_tests-b12d07c_tests.cmake")
+  include("/Users/grzzi/Desktop/dnb_bass_synth/build_clean_alignment_fix/tests/domain_tests-b12d07c_tests.cmake")
+else()
+  add_test(domain_tests_NOT_BUILT-b12d07c domain_tests_NOT_BUILT-b12d07c)
+endif()

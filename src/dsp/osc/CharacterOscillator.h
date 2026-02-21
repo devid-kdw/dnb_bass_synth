@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../core/Oversampler.h"
 #include <algorithm>
 #include <cmath>
 
@@ -11,17 +12,29 @@ class CharacterOscillator {
 public:
   CharacterOscillator() = default;
 
-  void prepare(double newSampleRate) { sampleRate = newSampleRate; }
+  void prepare(double newSampleRate, size_t maxBlockSize = 256) {
+    sampleRate = newSampleRate;
+    // According to D-001 FM path needs OS
+    os.prepare(sampleRate, core::Oversampler::Factor::x4, maxBlockSize);
+    updateIncrements();
+  }
 
   void setFrequency(float newFrequency) {
     frequency = newFrequency;
-    phaseIncrement = static_cast<float>(frequency * (2.0 * M_PI / sampleRate));
+    updateIncrements();
   }
 
   void setFMRatio(float newRatio) {
     fmRatio = newRatio;
+    updateIncrements();
+  }
+
+  void updateIncrements() {
+    // OS rate = sampleRate * 4
+    double osRate = sampleRate * 4.0;
+    phaseIncrement = static_cast<float>(frequency * (2.0 * M_PI / osRate));
     fmIncrement =
-        static_cast<float>((frequency * fmRatio) * (2.0 * M_PI / sampleRate));
+        static_cast<float>((frequency * fmRatio) * (2.0 * M_PI / osRate));
   }
 
   void setFMDepth(float newDepth) {
@@ -31,31 +44,41 @@ public:
   void resetPhase() {
     currentPhase = 0.0f;
     fmPhase = 0.0f;
+    os.reset();
   }
 
-  // Process a single sample
-  [[nodiscard]] inline float process() {
-    // Modulator (Sine)
-    float modulator = std::sin(fmPhase);
+  // Process a block natively generating 4x samples
+  void processBlock(float *buffer, size_t numSamples) {
+    if (numSamples == 0)
+      return;
 
-    // Carrier (Sine with Phase Modulation).
-    // FM Depth scaled by a constant to map [0,1] to useful PI modulation
-    // depths.
-    float output = std::sin(currentPhase +
-                            (modulator * fmDepth * static_cast<float>(M_PI)));
+    size_t safeSamples = std::min(numSamples, os.getCapacity());
+    float *oversampled = os.getUpBuffer();
+    size_t osSamples = safeSamples * 4;
 
-    // Tick phases
-    currentPhase += phaseIncrement;
-    if (currentPhase >= static_cast<float>(2.0 * M_PI)) {
-      currentPhase -= static_cast<float>(2.0 * M_PI);
+    for (size_t i = 0; i < osSamples; ++i) {
+      // Modulator (Sine)
+      float modulator = std::sin(fmPhase);
+
+      // Carrier
+      float output = std::sin(currentPhase +
+                              (modulator * fmDepth * static_cast<float>(M_PI)));
+
+      // Tick phases
+      currentPhase += phaseIncrement;
+      if (currentPhase >= static_cast<float>(2.0 * M_PI)) {
+        currentPhase -= static_cast<float>(2.0 * M_PI);
+      }
+
+      fmPhase += fmIncrement;
+      if (fmPhase >= static_cast<float>(2.0 * M_PI)) {
+        fmPhase -= static_cast<float>(2.0 * M_PI);
+      }
+
+      oversampled[i] = output;
     }
 
-    fmPhase += fmIncrement;
-    if (fmPhase >= static_cast<float>(2.0 * M_PI)) {
-      fmPhase -= static_cast<float>(2.0 * M_PI);
-    }
-
-    return output;
+    os.processDown(buffer, numSamples);
   }
 
 private:
@@ -71,6 +94,8 @@ private:
   float fmDepth = 0.0f;
   float fmPhase = 0.0f;
   float fmIncrement = 0.0f;
+
+  core::Oversampler os;
 };
 
 } // namespace dnb::dsp::osc

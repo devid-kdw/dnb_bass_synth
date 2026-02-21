@@ -69,7 +69,18 @@ Do not expand into:
 
 If requested feature conflicts with source-of-truth docs, raise conflict explicitly.
 
-## 9. Execution Package (Use These Files)
+## 9. Repo Alignment Updates (Mandatory)
+Effective from 2026-02-21 alignment review:
+1. Before any fresh configure/build, run `tools/scripts/init_submodules.sh`.
+2. Do not reintroduce `FetchContent` dependency flow in UI-related CMake wiring.
+3. Do not rely on stale `build/_deps` fallback artifacts as primary dependency path.
+4. Keep UI contract discipline: no runtime assumptions on unstable plugin wiring until backend/domain contract is explicitly marked stable.
+5. Read and follow:
+   - `docs/qa/alignment_handoffs/ALIGN_D002_D003_handoff.md`
+   - `docs/qa/alignment_remediation_review.md`
+   - `docs/qa/backend_phase_handoffs/ALIGN_D001_handoff.md`
+
+## 10. Execution Package (Use These Files)
 - `docs/agent_briefs/frontend_ui_phase_tasklist.md` (phase-by-phase execution tasks)
 - `docs/agent_briefs/frontend_ui_agent_prompt.md` (copy/paste startup prompt)
 - `docs/agent_briefs/frontend_ui_p1_fix_prompt.md` (P1 remediation prompt)

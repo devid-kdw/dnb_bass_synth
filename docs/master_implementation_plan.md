@@ -228,6 +228,8 @@ Required handoff packet from agent:
 | 2026-02-21 | P2 (Remediation) | Backend/DSP + Frontend/UI + Orchestrator | Review -> Done | Remediation accepted, tests pass (11/11) and portability smoke compile passes; closure report in `docs/qa/p2_remediation_final_review.md` | Start P3 backend and continue frontend scaffold support |
 | 2026-02-21 | P3 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Review | P3 delivered by both agents; review logged in `docs/qa/p3_review.md`, backend compile/integration blockers found in P3 modules | Backend submits P3 fix patch and re-review |
 | 2026-02-21 | P3 (Remediation) | Backend/DSP + Frontend/UI + Orchestrator | Review -> Done | Remediation accepted, tests pass (17/17) and P3 header smoke compile passes; closure report in `docs/qa/p3_remediation_final_review.md` | Start P4 backend and continue frontend support |
+| 2026-02-21 | Alignment (D-001/002/003) | Backend/DSP + TechStack/Repo + Orchestrator | In Progress -> Review | Alignment remediation reviewed in `docs/qa/alignment_remediation_review.md`; D-003 closed, D-001/D-002 partially unresolved | Close remaining alignment findings before P4 |
+| 2026-02-21 | Alignment (F-ALIGN-001/002/003) | Backend/DSP + TechStack/Repo + Orchestrator | Review -> Done | Final review accepted in `docs/qa/alignment_remediation_final_review.md`; submodule pinning, strict test dependency policy, and RT-safe oversampler path verified | Unblock P4 and start engine orchestration |
 
 ## 8. Open Risks and Blockers
 | ID | Type | Description | Impact | Mitigation | Owner | Status |
@@ -240,8 +242,11 @@ Required handoff packet from agent:
 | R-006 | Portability | `src/dsp/core/DenormalFlush.h` uses unconditional x86 intrinsics include and fails on non-x86 builds | High | Add architecture guards + no-op fallback + coverage test in P2 fix patch | Backend/DSP | Closed |
 | R-007 | Integration | P3 modules (`StateVariableFilter`, `Saturator`, `Wavefolder`) are not compile-covered and currently fail include resolution in smoke compile | High | Fix include paths, add compile coverage/tests, rerun review gates | Backend/DSP | Closed |
 | R-008 | DSP Correctness | `CrossoverLR4` HP denominator coefficients are used in process but not assigned in `setFrequency` | High | Assign HP denominator terms and add frequency-response assertions in tests | Backend/DSP | Closed |
+| R-009 | RT-Safety | `Oversampler` can resize internal buffers in processing path (`getUpBuffer`/`processUp`) | High | Remove runtime resize and enforce preallocation from `prepare()` | Backend/DSP | Closed |
+| R-010 | Reproducibility | `.gitmodules` declared but extern submodules are not pinned as gitlinks in repo index | High | Commit proper extern submodule gitlinks and verify clean configure path | TechStack/Repo | Closed |
+| R-011 | Build Policy | Tests CMake allows binary-dir Catch2 fallback from `_deps`, weakening strict submodule-first policy | Medium | Remove fallback or gate behind explicit opt-in compat flag | TechStack/Repo | Closed |
 
 ## 9. Next Delegation Queue
-1. Start backend `P4 - Voice/Engine Orchestration` implementation.
-2. Keep frontend on scaffold/support tasks for P4 until P5 integration gate.
-3. Before P5, reconfirm schema contract with a short checkpoint review.
+1. Start `P4 - Voice/Engine Orchestration` (backend primary owner).
+2. Keep frontend on support/scaffold tasks until P5 integration gate.
+3. At P4 handoff, run focused note lifecycle and click-regression QA before P5.

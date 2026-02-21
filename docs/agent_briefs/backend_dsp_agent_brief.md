@@ -68,11 +68,24 @@ Do not expand into:
 
 Any major deviation requires ADR before merge.
 
-## 9. Execution Package (Use These Files)
+## 9. Repo Alignment Updates (Mandatory)
+Effective from 2026-02-21 alignment review:
+1. Before any fresh configure/build, run `tools/scripts/init_submodules.sh`.
+2. Do not reintroduce `FetchContent` dependency flow for tests/build wiring.
+3. Do not rely on stale `build/_deps` fallback artifacts as primary dependency path.
+4. Keep RT-safe guarantee: no runtime allocations in audio-thread processing paths.
+5. Read and follow:
+   - `docs/qa/alignment_handoffs/ALIGN_D002_D003_handoff.md`
+   - `docs/qa/alignment_remediation_review.md`
+   - `docs/qa/backend_phase_handoffs/ALIGN_D001_handoff.md`
+
+## 10. Execution Package (Use These Files)
 - `docs/agent_briefs/backend_dsp_phase_tasklist.md` (phase-by-phase execution tasks)
 - `docs/agent_briefs/backend_dsp_agent_prompt.md` (copy/paste startup prompt)
 - `docs/agent_briefs/backend_dsp_p1_fix_prompt.md` (P1 remediation prompt)
 - `docs/agent_briefs/backend_dsp_p2_fix_tasklist.md` (P2 remediation tasklist)
 - `docs/agent_briefs/backend_dsp_p2_fix_prompt.md` (P2 remediation prompt)
 - `docs/agent_briefs/backend_dsp_p3_fix_prompt.md` (P3 remediation prompt)
+- `docs/agent_briefs/backend_dsp_alignment_tasklist.md` (alignment closure for F-ALIGN-001)
+- `docs/agent_briefs/backend_dsp_alignment_prompt.md` (alignment prompt for F-ALIGN-001)
 - `docs/master_implementation_plan.md` (current phase status and global gates)
