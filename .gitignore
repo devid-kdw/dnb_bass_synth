@@ -1,0 +1,34 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+/build/
+/build-*/
+/cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+Testing/
+*.cmake.user
+compile_commands.json
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Logs/temp
+*.log
+*.tmp
+
+# Keep canonical knowledge docs in repo
+!knowledge/
+!knowledge/*.pdf
+!knowledge/*.docx

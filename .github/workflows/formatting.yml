@@ -1,0 +1,7 @@
+name: formatting
+on: [push, pull_request]
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Formatting skeleton - implement in Phase 8"
