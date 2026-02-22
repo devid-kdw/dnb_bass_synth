@@ -29,10 +29,7 @@ TEST_CASE("DSP Critical values are completely locked", "[domain][limits]") {
 }
 
 TEST_CASE("FM Ratio snaps to nearest valid harmonic", "[domain][limits]") {
-  REQUIRE_THAT(limits::snapFMRatio(1.1f),
-               Catch::Matchers::WithinAbs(1.00f, 0.01f));
-  REQUIRE_THAT(limits::snapFMRatio(1.4f),
-               Catch::Matchers::WithinAbs(1.41f, 0.01f));
-  REQUIRE_THAT(limits::snapFMRatio(9.0f),
-               Catch::Matchers::WithinAbs(8.23f, 0.01f));
+  REQUIRE_THAT(limits::snapFMRatio(1.1f), Catch::Matchers::WithinAbs(1.00f, 0.01f));
+  REQUIRE_THAT(limits::snapFMRatio(1.4f), Catch::Matchers::WithinAbs(1.41f, 0.01f));
+  REQUIRE_THAT(limits::snapFMRatio(9.0f), Catch::Matchers::WithinAbs(8.23f, 0.01f));
 }

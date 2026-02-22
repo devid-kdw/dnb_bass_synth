@@ -213,10 +213,13 @@ A phase is done only when:
 - decisions and deviations are documented (ADR when architecture-impacting)
 - code is ready for downstream agent integration without hidden assumptions
 
-## 6. Current Gate Backlog (Before P8)
+## 6. Current Gate Backlog (P8 Review)
 Status:
 - P6->P7 backlog is closed (`docs/qa/p6_to_p7_gate_deviations.md`, consolidated in `docs/qa/p6_final_gate_review.md`).
 - P7 remediation backlog is closed (`docs/qa/p7_fix_review.md`, accepted in `docs/qa/p7_final_gate_review.md`).
+- Post-gate DAW hotfix backlog is closed (`docs/qa/p7_post_gate_daw_hotfix_review.md`).
+- P8 handoffs are submitted and reviewed in `docs/qa/p8_gate_review.md`.
 
-Current kickoff blockers for P8:
-- none at plan level; proceed with CI/CD hardening scope from Phase 8.
+Current blockers before MVP RC:
+- no structural blocker remains after P8 remediation patch-set
+- final closure requires cloud CI evidence for new Windows + formatting/lint gates

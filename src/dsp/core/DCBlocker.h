@@ -18,7 +18,9 @@ public:
 
   // Set the internal coefficient R directly.
   // Higher values lower the cutoff frequency (slower reaction to DC).
-  void setCoefficient(float newR) { R = newR; }
+  void setCoefficient(float newR) {
+    R = newR;
+  }
 
   [[nodiscard]] inline float process(float x) {
     float y = x - xPrev + R * yPrev;

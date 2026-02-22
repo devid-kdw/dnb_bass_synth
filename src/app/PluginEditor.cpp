@@ -1,17 +1,20 @@
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
 
-DnBBassSynthAudioProcessorEditor::DnBBassSynthAudioProcessorEditor(
-    DnBBassSynthAudioProcessor &p)
+DnBBassSynthAudioProcessorEditor::DnBBassSynthAudioProcessorEditor(DnBBassSynthAudioProcessor &p)
     : AudioProcessorEditor(&p), audioProcessor(p) {
   addAndMakeVisible(mainLayout);
-  setSize(800, 600);
+  // Give enough room for the stylized asset pack so controls stay functional.
+  setSize(1120, 760);
 
   // Initialize standard bindings tying the UI strictly to Domain/APVTS
   // parameters
   bindingLayer = std::make_unique<dnb_bass::ui::BindingLayer>(
-      audioProcessor.getApvts(), mainLayout.getMacroPanel(),
-      mainLayout.getStyleMorphControl(), mainLayout.getStyleSelector());
+      audioProcessor.getApvts(), mainLayout.getMacroPanel(), mainLayout.getStyleMorphControl(),
+      mainLayout.getStyleSelector());
+
+  mainLayout.getVisualFeedbackView().setLevelProvider(
+      [this]() { return audioProcessor.getUiOutputLevel(); });
 }
 
 DnBBassSynthAudioProcessorEditor::~DnBBassSynthAudioProcessorEditor() = default;

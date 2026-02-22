@@ -40,9 +40,7 @@ public:
 
   void popNote(int noteNumber) {
     auto it = std::find_if(activeNotes.begin(), activeNotes.begin() + count,
-                           [noteNumber](const NoteEvent &n) {
-                             return n.noteNumber == noteNumber;
-                           });
+                           [noteNumber](const NoteEvent &n) { return n.noteNumber == noteNumber; });
 
     if (it != activeNotes.begin() + count) {
       size_t index = std::distance(activeNotes.begin(), it);
@@ -54,11 +52,17 @@ public:
     }
   }
 
-  void clear() { count = 0; }
+  void clear() {
+    count = 0;
+  }
 
-  [[nodiscard]] bool isEmpty() const { return count == 0; }
+  [[nodiscard]] bool isEmpty() const {
+    return count == 0;
+  }
 
-  [[nodiscard]] bool isLegato() const { return count > 1; }
+  [[nodiscard]] bool isLegato() const {
+    return count > 1;
+  }
 
   [[nodiscard]] NoteEvent getLatestNote() const {
     if (count == 0) {

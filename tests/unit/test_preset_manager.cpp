@@ -28,19 +28,37 @@ class DummyProcessor : public juce::AudioProcessor {
 public:
   DummyProcessor() : apvts(*this, nullptr, "Parameters", createDummyLayout()) {}
 
-  const juce::String getName() const override { return "Dummy"; }
+  const juce::String getName() const override {
+    return "Dummy";
+  }
   void prepareToPlay(double, int) override {}
   void releaseResources() override {}
   void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) override {}
-  juce::AudioProcessorEditor *createEditor() override { return nullptr; }
-  bool hasEditor() const override { return false; }
-  bool acceptsMidi() const override { return false; }
-  bool producesMidi() const override { return false; }
-  double getTailLengthSeconds() const override { return 0.0; }
-  int getNumPrograms() override { return 1; }
-  int getCurrentProgram() override { return 0; }
+  juce::AudioProcessorEditor *createEditor() override {
+    return nullptr;
+  }
+  bool hasEditor() const override {
+    return false;
+  }
+  bool acceptsMidi() const override {
+    return false;
+  }
+  bool producesMidi() const override {
+    return false;
+  }
+  double getTailLengthSeconds() const override {
+    return 0.0;
+  }
+  int getNumPrograms() override {
+    return 1;
+  }
+  int getCurrentProgram() override {
+    return 0;
+  }
   void setCurrentProgram(int) override {}
-  const juce::String getProgramName(int) override { return {}; }
+  const juce::String getProgramName(int) override {
+    return {};
+  }
   void changeProgramName(int, const juce::String &) override {}
   void getStateInformation(juce::MemoryBlock &) override {}
   void setStateInformation(const void *, int) override {}
@@ -53,8 +71,7 @@ TEST_CASE("PresetManager Save and Load Roundtrip", "[preset]") {
   DummyProcessor proc2;
 
   // Set non-default values in proc1
-  proc1.apvts.getParameter(juce::String(std::string(ampAttack.id)))
-      ->setValueNotifyingHost(0.5f);
+  proc1.apvts.getParameter(juce::String(std::string(ampAttack.id)))->setValueNotifyingHost(0.5f);
   proc1.apvts.getParameter(juce::String(std::string(macroRollerDyn.id)))
       ->setValueNotifyingHost(0.7f);
 
@@ -64,16 +81,12 @@ TEST_CASE("PresetManager Save and Load Roundtrip", "[preset]") {
   REQUIRE(data.getSize() > 0);
 
   // Load state into proc2
-  PresetManager::loadStateInformation(data.getData(), data.getSize(),
-                                      proc2.apvts);
+  PresetManager::loadStateInformation(data.getData(), data.getSize(), proc2.apvts);
 
   // Values should match
-  float attack2 =
-      proc2.apvts.getParameter(juce::String(std::string(ampAttack.id)))
-          ->getValue();
+  float attack2 = proc2.apvts.getParameter(juce::String(std::string(ampAttack.id)))->getValue();
   float roller2 =
-      proc2.apvts.getParameter(juce::String(std::string(macroRollerDyn.id)))
-          ->getValue();
+      proc2.apvts.getParameter(juce::String(std::string(macroRollerDyn.id)))->getValue();
 
   REQUIRE(attack2 == Catch::Approx(0.5f));
   REQUIRE(roller2 == Catch::Approx(0.7f));
@@ -84,8 +97,7 @@ TEST_CASE("PresetMigration Legacy Up-conversion", "[preset]") {
 
   // Create a raw APVTS XML matching what older versions of JUCE would save
   // directly
-  proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))
-      ->setValueNotifyingHost(0.8f);
+  proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))->setValueNotifyingHost(0.8f);
 
   // Notice we use the old ID name "macro.roller_dyn" here for legacy compat
   // test Because it's not in our dummy layout, we inject it directly into a
@@ -104,15 +116,10 @@ TEST_CASE("PresetMigration Legacy Up-conversion", "[preset]") {
 
   // Load into APVTS using PresetManager, which should trigger V0 -> V1
   // migration
-  PresetManager::loadStateInformation(data.getData(), data.getSize(),
-                                      proc.apvts);
+  PresetManager::loadStateInformation(data.getData(), data.getSize(), proc.apvts);
 
-  float attack =
-      proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))
-          ->getValue();
-  float roller =
-      proc.apvts.getParameter(juce::String(std::string(macroRollerDyn.id)))
-          ->getValue();
+  float attack = proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))->getValue();
+  float roller = proc.apvts.getParameter(juce::String(std::string(macroRollerDyn.id)))->getValue();
 
   REQUIRE(attack == Catch::Approx(0.8f));
 
@@ -126,8 +133,7 @@ TEST_CASE("PresetManager graceful handling of corrupt XML/data", "[preset]") {
 
   // Store default attack
   float defaultAttack =
-      proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))
-          ->getValue();
+      proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))->getValue();
 
   const char *badData = "<InvalidXML>>///";
 
@@ -136,18 +142,15 @@ TEST_CASE("PresetManager graceful handling of corrupt XML/data", "[preset]") {
 
   // Values should be unchanged
   float currentAttack =
-      proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))
-          ->getValue();
+      proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))->getValue();
   REQUIRE(currentAttack == defaultAttack);
 }
 
-TEST_CASE("PresetManager gracefully ignores unknown fields and parameters",
-          "[preset]") {
+TEST_CASE("PresetManager gracefully ignores unknown fields and parameters", "[preset]") {
   DummyProcessor proc;
 
   // Set up valid parameter load expectation
-  proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))
-      ->setValueNotifyingHost(0.5f);
+  proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))->setValueNotifyingHost(0.5f);
   auto rawTree = proc.apvts.copyState();
 
   // Inject a completely unknown parameter
@@ -157,10 +160,8 @@ TEST_CASE("PresetManager gracefully ignores unknown fields and parameters",
   rawTree.addChild(unknownParam, -1, nullptr);
 
   // Wrap it properly
-  juce::ValueTree wrapper{
-      juce::Identifier(juce::String(std::string(schema::presetTag)))};
-  wrapper.setProperty(juce::String(std::string(schema::versionAttr)), 1,
-                      nullptr);
+  juce::ValueTree wrapper{juce::Identifier(juce::String(std::string(schema::presetTag)))};
+  wrapper.setProperty(juce::String(std::string(schema::versionAttr)), 1, nullptr);
   wrapper.addChild(rawTree, -1, nullptr);
 
   std::unique_ptr<juce::XmlElement> xml(wrapper.createXml());
@@ -175,32 +176,25 @@ TEST_CASE("PresetManager gracefully ignores unknown fields and parameters",
   std::string jsonStr = root.dump();
 
   // Reset processor before loading
-  proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))
-      ->setValueNotifyingHost(0.0f);
+  proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))->setValueNotifyingHost(0.0f);
 
   // Attempt load - must not crash, must skip unknown JSON fields, must skip
   // unknown XML params
-  PresetManager::loadStateInformation(jsonStr.c_str(), jsonStr.size(),
-                                      proc.apvts);
+  PresetManager::loadStateInformation(jsonStr.c_str(), jsonStr.size(), proc.apvts);
 
   // Valid parameter must be accurately loaded
-  float attack =
-      proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))
-          ->getValue();
+  float attack = proc.apvts.getParameter(juce::String(std::string(ampAttack.id)))->getValue();
   REQUIRE(attack == Catch::Approx(0.5f));
 }
 
-TEST_CASE("PresetManager saveState outputs canonical plugin version",
-          "[preset]") {
+TEST_CASE("PresetManager saveState outputs canonical plugin version", "[preset]") {
   DummyProcessor proc;
   juce::MemoryBlock data;
   PresetManager::saveStateInformation(proc.apvts, data);
 
-  std::string_view rawData(static_cast<const char *>(data.getData()),
-                           data.getSize());
+  std::string_view rawData(static_cast<const char *>(data.getData()), data.getSize());
   auto root = nlohmann::json::parse(rawData);
 
   REQUIRE(root.contains("plugin_version"));
-  REQUIRE(root["plugin_version"].get<std::string>() ==
-          std::string(schema::pluginVersion));
+  REQUIRE(root["plugin_version"].get<std::string>() == std::string(schema::pluginVersion));
 }

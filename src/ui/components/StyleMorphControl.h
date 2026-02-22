@@ -13,36 +13,55 @@ namespace ui {
 class StyleMorphControl : public juce::Component {
 public:
   StyleMorphControl() {
-    frameImg = juce::ImageCache::getFromMemory(
-        UIAssets::ui_panel_style_morph_frame_base_v001_png,
-        UIAssets::ui_panel_style_morph_frame_base_v001_pngSize);
+    frameImg =
+        juce::ImageCache::getFromMemory(UIAssets::ui_panel_style_morph_frame_base_v001_png,
+                                        UIAssets::ui_panel_style_morph_frame_base_v001_pngSize);
 
-    morphSlider = std::make_unique<ImageMorphSlider>(
-        UIAssets::ui_style_morph_track_main_base_v001_png,
-        UIAssets::ui_style_morph_track_main_base_v001_pngSize,
-        UIAssets::ui_style_morph_thumb_main_base_v001_png,
-        UIAssets::ui_style_morph_thumb_main_base_v001_pngSize,
-        UIAssets::ui_style_morph_glow_main_active_v001_png,
-        UIAssets::ui_style_morph_glow_main_active_v001_pngSize);
+    morphSlider =
+        std::make_unique<ImageMorphSlider>(UIAssets::ui_style_morph_track_main_base_v001_png,
+                                           UIAssets::ui_style_morph_track_main_base_v001_pngSize,
+                                           UIAssets::ui_style_morph_thumb_main_base_v001_png,
+                                           UIAssets::ui_style_morph_thumb_main_base_v001_pngSize,
+                                           UIAssets::ui_style_morph_glow_main_active_v001_png,
+                                           UIAssets::ui_style_morph_glow_main_active_v001_pngSize);
 
+    morphSlider->onValueChange = [this] { repaint(); };
     addAndMakeVisible(morphSlider.get());
   }
 
   void resized() override {
     if (morphSlider != nullptr) {
       // Frame has inherent padding, fit slider into logical track zone
-      morphSlider->setBounds(getLocalBounds().reduced(20, 25));
+      morphSlider->setBounds(getLocalBounds().reduced(24, 14));
     }
   }
 
   void paint(juce::Graphics &g) override {
     if (frameImg.isValid()) {
-      g.drawImage(frameImg, getLocalBounds().toFloat(),
-                  juce::RectanglePlacement::stretchToFit);
+      g.drawImage(frameImg, getLocalBounds().toFloat(), juce::RectanglePlacement::stretchToFit);
+    }
+
+    if (morphSlider != nullptr) {
+      const float proportion =
+          static_cast<float>(morphSlider->valueToProportionOfLength(morphSlider->getValue()));
+      const int percent = juce::roundToInt(proportion * 100.0f);
+
+      auto area = getLocalBounds().reduced(26, 4);
+      auto top = area.removeFromTop(14);
+      auto left = top.removeFromLeft(84);
+      auto right = top.removeFromRight(84);
+      g.setFont(juce::Font(11.5f, juce::Font::bold));
+      g.setColour(Theme::textSecondary.withAlpha(0.92f));
+      g.drawFittedText("Tech", left, juce::Justification::left, 1);
+      g.drawFittedText("Morph " + juce::String(percent) + "%", top, juce::Justification::centred,
+                       1);
+      g.drawFittedText("Dark", right, juce::Justification::right, 1);
     }
   }
 
-  juce::Slider &getSlider() { return *morphSlider; }
+  juce::Slider &getSlider() {
+    return *morphSlider;
+  }
 
 private:
   juce::Image frameImg;

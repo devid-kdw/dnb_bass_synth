@@ -31,8 +31,8 @@ static void BM_VoiceManager_ProcessBlock(benchmark::State &state) {
 
   for (auto _ : state) {
     block.clear();
-    benchmark::DoNotOptimize(manager.processBlock(
-        block.getWritePointer(0), block.getWritePointer(1), 512));
+    benchmark::DoNotOptimize(
+        manager.processBlock(block.getWritePointer(0), block.getWritePointer(1), 512));
     benchmark::ClobberMemory();
   }
 }

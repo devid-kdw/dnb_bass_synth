@@ -33,7 +33,7 @@ If conflict exists, no implementation proceeds before resolution and ADR note.
 | P6 | Preset/State/Migration | Done | Backend/DSP | P5 | `src/preset/*`, state migration tests |
 | P6.1 | Macro-10 Expansion + P7 Gate Closure | Done | Backend/DSP + Frontend/UI + Orchestrator | P6 | 6 new macros + gate backlog closure |
 | P7 | QA + Render + Bench + UI Skin Integration | Done | Backend/DSP + Frontend/UI + UI Graphic Designer + Orchestrator | P6.1 | `tests/*`, `bench/*`, QA reports, stylized UI asset pack |
-| P8 | CI/CD Hardening | Planned | Orchestrator | P7 | `.github/workflows/*`, CI gates |
+| P8 | CI/CD Hardening | Review | Orchestrator | P7 | `.github/workflows/*`, CI gates |
 
 ## 4. Global Gate Conditions
 No phase can move to `Done` unless all conditions pass:
@@ -273,6 +273,9 @@ Required handoff packet from agent:
 | 2026-02-22 | P6 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Done | Preset/state migration layer accepted via `docs/qa/backend_phase_handoffs/P6_handoff_fix.md` and `docs/qa/frontend_phase_handoffs/P6_handoff_fix.md` | Execute P6.1 macro contract closure |
 | 2026-02-22 | P6.1 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Done | Final remediation accepted in `docs/qa/backend_phase_handoffs/P6_1_handoff_fix.md` and `docs/qa/frontend_phase_handoffs/P6_1_handoff_fix.md`; gate consolidated in `docs/qa/p6_final_gate_review.md` | Unblock P7 QA/render/bench |
 | 2026-02-22 | P7 | Backend/DSP + Frontend/UI + UI Graphic Designer + Orchestrator | Planned -> Done | P7 remediation findings closed in `docs/qa/p7_fix_review.md`; acceptance captured in `docs/qa/p7_final_gate_review.md` with build pass, `ctest` 45/45, benchmark evidence, and UI asset contract validation (manifest/export/runtime 60/60). | Start P8 CI/CD hardening kickoff |
+| 2026-02-22 | P7 (Post-Gate DAW Hotfix) | Orchestrator | Done -> Done | DAW-raised UI/runtime issues closed in `docs/qa/p7_post_gate_daw_hotfix_review.md` (knob endpoint arc, visual overlay cleanup, FM Metal style-bounded response), with build pass and `ctest` 45/45 re-validated. | Start P8 kickoff via backend/frontend support prompts |
+| 2026-02-22 | P8 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Blocked | P8 handoffs reviewed (`docs/qa/backend_phase_handoffs/P8_handoff.md`, `docs/qa/frontend_phase_handoffs/P8_handoff.md`) and verification rerun (`build`, `ctest`, frontend guard scripts all pass). Blocking deviations captured in `docs/qa/p8_gate_review.md`: missing Windows CI/release path and missing formatting/lint gates. | Run P8 remediation for CI matrix + formatting/lint, then re-review |
+| 2026-02-22 | P8 (Remediation) | Orchestrator | Blocked -> Review | Implemented CI/release Windows coverage and real formatting/lint gates (`.github/workflows/ci.yml`, `.github/workflows/release.yml`, `.github/workflows/formatting.yml`, `tools/scripts/format.sh`, `tools/scripts/lint.sh`). Local verification rerun: format/lint scripts pass, `build` pass, `ctest` 45/45 pass, frontend guard scripts pass. | Run GitHub Actions matrix and finalize P8 as Done |
 
 ## 8. Open Risks and Blockers
 | ID | Type | Description | Impact | Mitigation | Owner | Status |
@@ -293,8 +296,11 @@ Required handoff packet from agent:
 | R-014 | Contract Gap | P4 required style-mode morph handling not exposed in engine path yet | Medium | Implement engine morph state/progress surface or approve explicit defer note before P5 | Backend/DSP + Orchestrator | Closed |
 | R-015 | Contract Gap | P1 implemented 4 macros, but MVP knowledge docs require 10. Remaining 6 macros undocumented. | High | Temporary defer from ADR-005 superseded by P6.1 Macro-10 implementation and contract update. | Orchestrator | Closed (Superseded by P6.1) |
 | R-016 | Gate Readiness | P6->P7 deviations remain open across docs, handoff integrity, and macro-target closure | High | Closed through `docs/qa/p6_final_gate_review.md` with full closure map and verification evidence | Backend/DSP + Frontend/UI + Orchestrator | Closed |
+| R-017 | UX Runtime Consistency | Post-P7 DAW validation exposed knob endpoint rendering drift, overlapping static/runtime visuals, and FM Metal style-gate ambiguity | High | Closed through `docs/qa/p7_post_gate_daw_hotfix_review.md` and associated code/test updates | Orchestrator | Closed |
+| R-018 | CI Coverage | P8 techstack expectation required macOS + Windows CI/release coverage | High | Windows jobs implemented in `ci.yml` and `release.yml`; pending cloud run evidence before final close | Orchestrator + Backend/DSP | Mitigated |
+| R-019 | Quality Gate | P8 expects formatting/lint enforcement (`clang-format`, `clang-tidy`) | High | `formatting.yml` plus `tools/scripts/format.sh` and `tools/scripts/lint.sh` implemented; pending cloud run evidence before final close | Orchestrator + Frontend/UI + Backend/DSP | Mitigated |
 
 ## 9. Next Delegation Queue
-1. Start `P8 - CI/CD Hardening`.
-2. Implement and validate workflow matrix for configure/build/test on required targets.
-3. Add release artifact workflow with checksum generation and reproducibility checks.
+1. Run GitHub Actions (`ci`, `formatting-and-lint`, `release` on tag) to collect cloud evidence for new Windows + format/lint gates.
+2. If matrix is green, update `docs/qa/p8_gate_review.md` and move P8 from `Review` to `Done`.
+3. After P8 closure, run UI redesign pass using `docs/agent_briefs/ui_graphic_designer_p8_redesign_prompt.md`.

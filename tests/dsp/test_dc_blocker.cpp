@@ -9,10 +9,8 @@ TEST_CASE("DC Blocker removes DC offset", "[dsp][core]") {
 
   SECTION("Passes alternating signal relatively unaffected") {
     blocker.reset();
-    REQUIRE_THAT(blocker.process(1.0f),
-                 Catch::Matchers::WithinAbs(1.0f, 0.01f));
-    REQUIRE_THAT(blocker.process(-1.0f),
-                 Catch::Matchers::WithinAbs(-1.005f, 0.01f));
+    REQUIRE_THAT(blocker.process(1.0f), Catch::Matchers::WithinAbs(1.0f, 0.01f));
+    REQUIRE_THAT(blocker.process(-1.0f), Catch::Matchers::WithinAbs(-1.005f, 0.01f));
   }
 
   SECTION("Filters out massive DC") {

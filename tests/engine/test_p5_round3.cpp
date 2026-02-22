@@ -7,8 +7,7 @@
 
 namespace {
 
-std::vector<float> renderWithRaw(const dnb::domain::RawInputParams &raw,
-                                 size_t numSamples = 256) {
+std::vector<float> renderWithRaw(const dnb::domain::RawInputParams &raw, size_t numSamples = 256) {
   dnb::domain::ConstraintEngine constraintEngine;
   dnb::engine::SynthEngine engine;
   engine.prepare(44100.0, numSamples);
@@ -66,8 +65,7 @@ float diffEnergy(const std::vector<float> &a, const std::vector<float> &b) {
 
 } // namespace
 
-TEST_CASE("P5 Round 3: style.mode impacts rendered audio",
-          "[engine][p5][audio]") {
+TEST_CASE("P5 Round 3: style.mode impacts rendered audio", "[engine][p5][audio]") {
   dnb::domain::RawInputParams tech;
   tech.activeStyle = dnb::domain::style::Mode::Tech;
   tech.macroFmMetal = 1.0f;
@@ -82,8 +80,7 @@ TEST_CASE("P5 Round 3: style.mode impacts rendered audio",
   REQUIRE(diffEnergy(techRender, darkRender) > 0.01f);
 }
 
-TEST_CASE("P5 Round 3: envelope APVTS params impact rendered audio",
-          "[engine][p5][audio]") {
+TEST_CASE("P5 Round 3: envelope APVTS params impact rendered audio", "[engine][p5][audio]") {
   dnb::domain::RawInputParams fastAttack;
   fastAttack.ampAttack = dnb::domain::limits::minAttackMs;
   fastAttack.ampRelease = dnb::domain::limits::defaultReleaseMs;
@@ -94,8 +91,7 @@ TEST_CASE("P5 Round 3: envelope APVTS params impact rendered audio",
   const auto fastAttackRender = renderWithRaw(fastAttack);
   const auto slowAttackRender = renderWithRaw(slowAttack);
 
-  REQUIRE(absEnergy(fastAttackRender, 0, 16) >
-          absEnergy(slowAttackRender, 0, 16));
+  REQUIRE(absEnergy(fastAttackRender, 0, 16) > absEnergy(slowAttackRender, 0, 16));
 
   dnb::domain::RawInputParams shortRelease;
   shortRelease.ampAttack = dnb::domain::limits::minAttackMs;
@@ -110,8 +106,7 @@ TEST_CASE("P5 Round 3: envelope APVTS params impact rendered audio",
   REQUIRE(absEnergy(shortTail, 128, 256) < absEnergy(longTail, 128, 256));
 }
 
-TEST_CASE("P5 Round 3: macro.neuro_formant impacts rendered audio",
-          "[engine][p5][audio]") {
+TEST_CASE("P5 Round 3: macro.neuro_formant impacts rendered audio", "[engine][p5][audio]") {
   dnb::domain::RawInputParams low;
   low.macroNeuroFormant = 0.0f;
 
@@ -124,8 +119,7 @@ TEST_CASE("P5 Round 3: macro.neuro_formant impacts rendered audio",
   REQUIRE(diffEnergy(lowRender, highRender) > 0.01f);
 }
 
-TEST_CASE("P5 Round 3: macro.fm_metal impacts rendered audio",
-          "[engine][p5][audio]") {
+TEST_CASE("P5 Round 3: macro.fm_metal impacts rendered audio", "[engine][p5][audio]") {
   dnb::domain::RawInputParams low;
   low.activeStyle = dnb::domain::style::Mode::Dark;
   low.macroFmMetal = 0.0f;
@@ -139,8 +133,7 @@ TEST_CASE("P5 Round 3: macro.fm_metal impacts rendered audio",
   REQUIRE(diffEnergy(lowRender, highRender) > 0.01f);
 }
 
-TEST_CASE("P5 Round 3: macro.roller_dynamics impacts rendered audio",
-          "[engine][p5][audio]") {
+TEST_CASE("P5 Round 3: macro.roller_dynamics impacts rendered audio", "[engine][p5][audio]") {
   dnb::domain::RawInputParams low;
   low.macroNeuroFormant = 0.8f;
   low.macroRollerDynamics = 0.0f;
@@ -154,8 +147,7 @@ TEST_CASE("P5 Round 3: macro.roller_dynamics impacts rendered audio",
   REQUIRE(diffEnergy(lowRender, highRender) > 0.01f);
 }
 
-TEST_CASE("P5 Round 3: macro.liquid_depth impacts rendered audio",
-          "[engine][p5][audio]") {
+TEST_CASE("P5 Round 3: macro.liquid_depth impacts rendered audio", "[engine][p5][audio]") {
   dnb::domain::RawInputParams dry;
   dry.macroNeuroFormant = 1.0f;
   dry.macroLiquidDepth = 0.0f;
@@ -169,8 +161,7 @@ TEST_CASE("P5 Round 3: macro.liquid_depth impacts rendered audio",
   REQUIRE(diffEnergy(dryRender, wetRender) > 0.01f);
 }
 
-TEST_CASE("P6.1 Macro-10: macro.sub_punch impacts rendered audio",
-          "[engine][p6][macro10][audio]") {
+TEST_CASE("P6.1 Macro-10: macro.sub_punch impacts rendered audio", "[engine][p6][macro10][audio]") {
   dnb::domain::RawInputParams off;
   off.macroSubPunch = 0.0f;
 
@@ -214,8 +205,7 @@ TEST_CASE("P6.1 Macro-10: macro.cutoff_motion impacts rendered audio",
   REQUIRE(diffEnergy(offRender, onRender) > 0.01f);
 }
 
-TEST_CASE("P6.1 Macro-10: macro.fold_bite impacts rendered audio",
-          "[engine][p6][macro10][audio]") {
+TEST_CASE("P6.1 Macro-10: macro.fold_bite impacts rendered audio", "[engine][p6][macro10][audio]") {
   dnb::domain::RawInputParams off;
   off.activeStyle = dnb::domain::style::Mode::Neuro; // Encourages fold
   off.macroFoldBite = 0.0f;

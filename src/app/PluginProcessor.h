@@ -38,11 +38,15 @@ public:
   void getStateInformation(juce::MemoryBlock &destData) override;
   void setStateInformation(const void *data, int sizeInBytes) override;
 
-  juce::AudioProcessorValueTreeState &getApvts() { return apvts; }
+  juce::AudioProcessorValueTreeState &getApvts() {
+    return apvts;
+  }
+  float getUiOutputLevel() const noexcept {
+    return uiOutputLevel.load(std::memory_order_relaxed);
+  }
 
 private:
-  static juce::AudioProcessorValueTreeState::ParameterLayout
-  createParameterLayout();
+  static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
   juce::AudioProcessorValueTreeState apvts;
 
@@ -64,6 +68,7 @@ private:
   std::atomic<float> *macroTableDriftParam = nullptr;
   std::atomic<float> *macroSmashGlueParam = nullptr;
   std::atomic<float> *styleModeParam = nullptr;
+  std::atomic<float> uiOutputLevel{0.0f};
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DnBBassSynthAudioProcessor)
 };

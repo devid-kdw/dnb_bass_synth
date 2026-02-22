@@ -34,8 +34,7 @@ public:
               UIAssets::ui_macro_knob_neuro_formant_hover_v001_png,
               UIAssets::ui_macro_knob_neuro_formant_hover_v001_pngSize,
               UIAssets::ui_macro_knob_neuro_formant_active_v001_png,
-              UIAssets::ui_macro_knob_neuro_formant_active_v001_pngSize,
-              "Neuro Formant");
+              UIAssets::ui_macro_knob_neuro_formant_active_v001_pngSize, "Neuro Formant");
 
     addSlider(UIAssets::ui_macro_knob_fm_metal_idle_v001_png,
               UIAssets::ui_macro_knob_fm_metal_idle_v001_pngSize,
@@ -49,16 +48,14 @@ public:
               UIAssets::ui_macro_knob_roller_dynamics_hover_v001_png,
               UIAssets::ui_macro_knob_roller_dynamics_hover_v001_pngSize,
               UIAssets::ui_macro_knob_roller_dynamics_active_v001_png,
-              UIAssets::ui_macro_knob_roller_dynamics_active_v001_pngSize,
-              "Roller Dynamics");
+              UIAssets::ui_macro_knob_roller_dynamics_active_v001_pngSize, "Roller Dynamics");
 
     addSlider(UIAssets::ui_macro_knob_liquid_depth_idle_v001_png,
               UIAssets::ui_macro_knob_liquid_depth_idle_v001_pngSize,
               UIAssets::ui_macro_knob_liquid_depth_hover_v001_png,
               UIAssets::ui_macro_knob_liquid_depth_hover_v001_pngSize,
               UIAssets::ui_macro_knob_liquid_depth_active_v001_png,
-              UIAssets::ui_macro_knob_liquid_depth_active_v001_pngSize,
-              "Liquid Depth");
+              UIAssets::ui_macro_knob_liquid_depth_active_v001_pngSize, "Liquid Depth");
 
     // 2. Advanced Macros
     addSlider(UIAssets::ui_macro_knob_sub_punch_idle_v001_png,
@@ -66,65 +63,64 @@ public:
               UIAssets::ui_macro_knob_sub_punch_hover_v001_png,
               UIAssets::ui_macro_knob_sub_punch_hover_v001_pngSize,
               UIAssets::ui_macro_knob_sub_punch_active_v001_png,
-              UIAssets::ui_macro_knob_sub_punch_active_v001_pngSize,
-              "Sub Punch");
+              UIAssets::ui_macro_knob_sub_punch_active_v001_pngSize, "Sub Punch");
 
     addSlider(UIAssets::ui_macro_knob_fm_pressure_idle_v001_png,
               UIAssets::ui_macro_knob_fm_pressure_idle_v001_pngSize,
               UIAssets::ui_macro_knob_fm_pressure_hover_v001_png,
               UIAssets::ui_macro_knob_fm_pressure_hover_v001_pngSize,
               UIAssets::ui_macro_knob_fm_pressure_active_v001_png,
-              UIAssets::ui_macro_knob_fm_pressure_active_v001_pngSize,
-              "FM Pressure");
+              UIAssets::ui_macro_knob_fm_pressure_active_v001_pngSize, "FM Pressure");
 
     addSlider(UIAssets::ui_macro_knob_cutoff_motion_idle_v001_png,
               UIAssets::ui_macro_knob_cutoff_motion_idle_v001_pngSize,
               UIAssets::ui_macro_knob_cutoff_motion_hover_v001_png,
               UIAssets::ui_macro_knob_cutoff_motion_hover_v001_pngSize,
               UIAssets::ui_macro_knob_cutoff_motion_active_v001_png,
-              UIAssets::ui_macro_knob_cutoff_motion_active_v001_pngSize,
-              "Cutoff");
+              UIAssets::ui_macro_knob_cutoff_motion_active_v001_pngSize, "Cutoff Motion");
 
     addSlider(UIAssets::ui_macro_knob_fold_bite_idle_v001_png,
               UIAssets::ui_macro_knob_fold_bite_idle_v001_pngSize,
               UIAssets::ui_macro_knob_fold_bite_hover_v001_png,
               UIAssets::ui_macro_knob_fold_bite_hover_v001_pngSize,
               UIAssets::ui_macro_knob_fold_bite_active_v001_png,
-              UIAssets::ui_macro_knob_fold_bite_active_v001_pngSize,
-              "Fold Bite");
+              UIAssets::ui_macro_knob_fold_bite_active_v001_pngSize, "Fold Bite");
 
     addSlider(UIAssets::ui_macro_knob_table_drift_idle_v001_png,
               UIAssets::ui_macro_knob_table_drift_idle_v001_pngSize,
               UIAssets::ui_macro_knob_table_drift_hover_v001_png,
               UIAssets::ui_macro_knob_table_drift_hover_v001_pngSize,
               UIAssets::ui_macro_knob_table_drift_active_v001_png,
-              UIAssets::ui_macro_knob_table_drift_active_v001_pngSize,
-              "Table Drift");
+              UIAssets::ui_macro_knob_table_drift_active_v001_pngSize, "Table Drift");
 
     addSlider(UIAssets::ui_macro_knob_smash_glue_idle_v001_png,
               UIAssets::ui_macro_knob_smash_glue_idle_v001_pngSize,
               UIAssets::ui_macro_knob_smash_glue_hover_v001_png,
               UIAssets::ui_macro_knob_smash_glue_hover_v001_pngSize,
               UIAssets::ui_macro_knob_smash_glue_active_v001_png,
-              UIAssets::ui_macro_knob_smash_glue_active_v001_pngSize,
-              "Smash Glue");
+              UIAssets::ui_macro_knob_smash_glue_active_v001_pngSize, "Smash Glue");
 
-    primaryFrameImg = juce::ImageCache::getFromMemory(
-        UIAssets::ui_panel_macro_primary_frame_base_v001_png,
-        UIAssets::ui_panel_macro_primary_frame_base_v001_pngSize);
+    primaryFrameImg =
+        juce::ImageCache::getFromMemory(UIAssets::ui_panel_macro_primary_frame_base_v001_png,
+                                        UIAssets::ui_panel_macro_primary_frame_base_v001_pngSize);
 
-    advancedFrameImg = juce::ImageCache::getFromMemory(
-        UIAssets::ui_panel_macro_advanced_frame_base_v001_png,
-        UIAssets::ui_panel_macro_advanced_frame_base_v001_pngSize);
+    advancedFrameImg =
+        juce::ImageCache::getFromMemory(UIAssets::ui_panel_macro_advanced_frame_base_v001_png,
+                                        UIAssets::ui_panel_macro_advanced_frame_base_v001_pngSize);
   }
 
-  void addSlider(const void *idle, int idleSize, const void *hover,
-                 int hoverSize, const void *active, int activeSize,
-                 const juce::String &labelText) {
-    auto *slider =
-        new ImageSlider(idle, idleSize, hover, hoverSize, active, activeSize);
+  void addSlider(const void *idle, int idleSize, const void *hover, int hoverSize,
+                 const void *active, int activeSize, const juce::String &labelText) {
+    auto *slider = new ImageSlider(idle, idleSize, hover, hoverSize, active, activeSize);
     addAndMakeVisible(slider);
     sliders.add(slider);
+
+    auto *valueLabel = new juce::Label();
+    valueLabel->setJustificationType(juce::Justification::centred);
+    valueLabel->setColour(juce::Label::textColourId, Theme::accentTech);
+    valueLabel->setText("0%", juce::dontSendNotification);
+    addAndMakeVisible(valueLabel);
+    valueLabels.add(valueLabel);
 
     auto *label = new juce::Label();
     label->setJustificationType(juce::Justification::centred);
@@ -132,40 +128,67 @@ public:
     label->setText(labelText, juce::dontSendNotification);
     addAndMakeVisible(label);
     labels.add(label);
+
+    slider->onValueChange = [slider, valueLabel] {
+      const float proportion =
+          static_cast<float>(slider->valueToProportionOfLength(slider->getValue()));
+      const int percent = juce::roundToInt(proportion * 100.0f);
+      valueLabel->setText(juce::String(percent) + "%", juce::dontSendNotification);
+      slider->repaint();
+    };
+    slider->onValueChange();
   }
 
   void resized() override {
-    auto bounds = getLocalBounds().reduced(5);
+    auto bounds = getLocalBounds().reduced(8);
 
-    int totalHeight = bounds.getHeight();
-    primaryBounds = bounds.removeFromTop(static_cast<int>(totalHeight * 0.45f));
-    bounds.removeFromTop(10); // Spacing between panels
+    const int totalHeight = bounds.getHeight();
+    const int panelGap = 12;
+    const int minPrimaryHeight = 140;
+    const int primaryHeight = juce::jmax(minPrimaryHeight, static_cast<int>(totalHeight * 0.52f));
+
+    primaryBounds = bounds.removeFromTop(primaryHeight);
+    bounds.removeFromTop(panelGap);
     advancedBounds = bounds;
 
     // Layout Primary Surface (4 macros)
-    auto pArea = primaryBounds.reduced(10);
-    int pWidth = pArea.getWidth() / primaryCount;
+    auto pArea = primaryBounds.reduced(18, 14);
+    const int pWidth = pArea.getWidth() / primaryCount;
     for (int i = 0; i < primaryCount; ++i) {
-      auto cell = pArea.removeFromLeft(pWidth).reduced(5);
-      labels[i]->setBounds(cell.removeFromBottom(20));
-      sliders[i]->setBounds(cell);
+      auto cell = pArea.removeFromLeft(pWidth).reduced(6, 4);
+      const int valueHeight = 18;
+      const int labelHeight = 24;
+      auto sliderRegion = cell.removeFromTop(cell.getHeight() - (valueHeight + labelHeight));
+      const int sliderSize =
+          juce::jmax(28, juce::jmin(sliderRegion.getWidth(), sliderRegion.getHeight()));
+      auto sliderBounds =
+          juce::Rectangle<int>(sliderSize, sliderSize).withCentre(sliderRegion.getCentre());
+      sliders[i]->setBounds(sliderBounds);
+      valueLabels[i]->setBounds(cell.removeFromTop(valueHeight));
+      labels[i]->setBounds(cell.withTrimmedTop(2));
     }
 
     // Layout Advanced Surface (6 macros)
-    auto aArea =
-        advancedBounds.reduced(5).withTrimmedTop(25); // Space for title
-    int aWidth = aArea.getWidth() / advancedCount;
+    auto aArea = advancedBounds.reduced(14, 10);
+    const int aWidth = aArea.getWidth() / advancedCount;
     for (int i = primaryCount; i < macroCount; ++i) {
-      auto cell = aArea.removeFromLeft(aWidth).reduced(2); // Tenser fit for 6
-      labels[i]->setBounds(cell.removeFromBottom(20));
-      sliders[i]->setBounds(cell);
+      auto cell = aArea.removeFromLeft(aWidth).reduced(4, 3);
+      const int valueHeight = 16;
+      const int labelHeight = 20;
+      auto sliderRegion = cell.removeFromTop(cell.getHeight() - (valueHeight + labelHeight));
+      const int sliderSize =
+          juce::jmax(24, juce::jmin(sliderRegion.getWidth(), sliderRegion.getHeight()));
+      auto sliderBounds =
+          juce::Rectangle<int>(sliderSize, sliderSize).withCentre(sliderRegion.getCentre());
+      sliders[i]->setBounds(sliderBounds);
+      valueLabels[i]->setBounds(cell.removeFromTop(valueHeight));
+      labels[i]->setBounds(cell.withTrimmedTop(1));
     }
   }
 
   void paint(juce::Graphics &g) override {
     if (primaryFrameImg.isValid()) {
-      g.drawImage(primaryFrameImg, primaryBounds.toFloat(),
-                  juce::RectanglePlacement::stretchToFit);
+      g.drawImage(primaryFrameImg, primaryBounds.toFloat(), juce::RectanglePlacement::stretchToFit);
     }
 
     if (advancedFrameImg.isValid()) {
@@ -174,7 +197,9 @@ public:
     }
   }
 
-  juce::Slider &getSlider(MacroIndex idx) { return *sliders[(int)idx]; }
+  juce::Slider &getSlider(MacroIndex idx) {
+    return *sliders[(int)idx];
+  }
 
 private:
   juce::Image primaryFrameImg;
@@ -184,6 +209,7 @@ private:
   juce::Rectangle<int> advancedBounds;
 
   juce::OwnedArray<juce::Slider> sliders;
+  juce::OwnedArray<juce::Label> valueLabels;
   juce::OwnedArray<juce::Label> labels;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MacroPanel)

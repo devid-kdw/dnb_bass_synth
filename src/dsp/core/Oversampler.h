@@ -26,8 +26,7 @@ public:
     stateUp.resize(numTaps, 0.0f);
     stateDown.resize(numTaps, 0.0f);
 
-    float cutoff =
-        0.5f / this->factor; // Nyquist limit of original signal relative to OS
+    float cutoff = 0.5f / this->factor; // Nyquist limit of original signal relative to OS
     float sum = 0.0f;
     int center = numTaps / 2;
     for (int i = 0; i < numTaps; ++i) {
@@ -38,10 +37,8 @@ public:
         firKernel[i] = std::sin(2.0f * cutoff * x) / x;
       }
       // Blackman window
-      float window =
-          0.42f -
-          0.5f * std::cos(2.0f * static_cast<float>(M_PI) * i / (numTaps - 1)) +
-          0.08f * std::cos(4.0f * static_cast<float>(M_PI) * i / (numTaps - 1));
+      float window = 0.42f - 0.5f * std::cos(2.0f * static_cast<float>(M_PI) * i / (numTaps - 1)) +
+                     0.08f * std::cos(4.0f * static_cast<float>(M_PI) * i / (numTaps - 1));
       firKernel[i] *= window;
       sum += firKernel[i];
     }
@@ -71,7 +68,9 @@ public:
   }
 
   // Access OS buffer directly when generating inside the oversampled domain
-  float *getUpBuffer() { return upSampledBuffer.data(); }
+  float *getUpBuffer() {
+    return upSampledBuffer.data();
+  }
 
   // Up-samples an input block. Returns a pointer to the oversampled buffer.
   float *processUp(const float *input, size_t numSamples) {

@@ -23,10 +23,9 @@ TEST_CASE("Voice block truncation regression", "[engine][regression]") {
 
     // The first 256 samples should be processed normally
     // The remainder up to 1500 should be explicitly zero-padded
-    REQUIRE(std::abs(sub[100]) >
-            0.0f); // Sub wave starts from 0 phase, index 100 is non-zero
-    REQUIRE(sub[256] == 0.0f);  // Padded tail starts here
-    REQUIRE(sub[1499] == 0.0f); // Padded tail ends here
+    REQUIRE(std::abs(sub[100]) > 0.0f); // Sub wave starts from 0 phase, index 100 is non-zero
+    REQUIRE(sub[256] == 0.0f);          // Padded tail starts here
+    REQUIRE(sub[1499] == 0.0f);         // Padded tail ends here
 
     REQUIRE(chars[256] == 0.0f);
     REQUIRE(chars[1499] == 0.0f);

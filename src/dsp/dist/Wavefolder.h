@@ -18,7 +18,9 @@ public:
   }
 
   // Fold amount is typically 1.0 (none) to 10.0+ (extreme)
-  void setFold(float newFold) { fold = newFold; }
+  void setFold(float newFold) {
+    fold = newFold;
+  }
 
   void processBlock(float *buffer, size_t numSamples) {
     if (fold <= 1.0f)

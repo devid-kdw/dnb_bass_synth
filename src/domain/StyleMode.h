@@ -28,19 +28,19 @@ struct StyleModifiers {
   float maxOttDepth;
   float defaultAttack;
   bool allowHarshDistortion;
-  bool enableFMMetal;
+  int fmMetalMaxRatioIndex;
 };
 
 inline StyleModifiers getModifiersForStyle(Mode mode) {
   switch (mode) {
   case Mode::Tech:
-    return {0.30f, 2.0f, false, false};
+    return {0.30f, 2.0f, false, 3};
   case Mode::Neuro:
-    return {0.60f, 1.0f, true, false};
+    return {0.60f, 1.0f, true, 4};
   case Mode::Dark:
-    return {0.60f, 0.0f, true, true};
+    return {0.60f, 0.0f, true, 5};
   default:
-    return {0.30f, 2.0f, false, false};
+    return {0.30f, 2.0f, false, 3};
   }
 }
 

@@ -6,19 +6,18 @@
 
 namespace dnb::preset {
 
-void PresetManager::saveStateInformation(
-    juce::AudioProcessorValueTreeState &apvts, juce::MemoryBlock &destData) {
+void PresetManager::saveStateInformation(juce::AudioProcessorValueTreeState &apvts,
+                                         juce::MemoryBlock &destData) {
 
   // 1. Get the current actual state from APVTS
   auto rawState = apvts.copyState();
 
   // 2. Wrap it inside our distinct namespace tag
-  juce::ValueTree outerState{
-      juce::Identifier(juce::String(std::string(schema::presetTag)))};
+  juce::ValueTree outerState{juce::Identifier(juce::String(std::string(schema::presetTag)))};
 
   // 3. Mark the version explicitly to protect loading
-  outerState.setProperty(juce::String(std::string(schema::versionAttr)),
-                         schema::currentVersion, nullptr);
+  outerState.setProperty(juce::String(std::string(schema::versionAttr)), schema::currentVersion,
+                         nullptr);
 
   // 4. Attach the APVTS payload
   outerState.addChild(rawState, -1, nullptr);
@@ -39,15 +38,13 @@ void PresetManager::saveStateInformation(
   }
 }
 
-void PresetManager::loadStateInformation(
-    const void *data, int sizeInBytes,
-    juce::AudioProcessorValueTreeState &apvts) {
+void PresetManager::loadStateInformation(const void *data, int sizeInBytes,
+                                         juce::AudioProcessorValueTreeState &apvts) {
 
   if (data == nullptr || sizeInBytes <= 0)
     return;
 
-  std::string_view rawData(static_cast<const char *>(data),
-                           static_cast<size_t>(sizeInBytes));
+  std::string_view rawData(static_cast<const char *>(data), static_cast<size_t>(sizeInBytes));
   juce::String xmlString;
 
   // 1. Try to parse as JSON first (New Format)
@@ -64,16 +61,14 @@ void PresetManager::loadStateInformation(
   }
 
   // 3. Parse XML string into juce elements
-  std::unique_ptr<juce::XmlElement> xmlState(
-      juce::XmlDocument::parse(xmlString));
+  std::unique_ptr<juce::XmlElement> xmlState(juce::XmlDocument::parse(xmlString));
 
   if (xmlState != nullptr) {
     auto outerTree = juce::ValueTree::fromXml(*xmlState);
 
     // 4. Validate outer wrapper exists
     if (outerTree.isValid() &&
-        outerTree.getType().toString() ==
-            juce::String(std::string(schema::presetTag))) {
+        outerTree.getType().toString() == juce::String(std::string(schema::presetTag))) {
 
       // 5. Apply schema migrations (V0/legacy to V1)
       if (PresetMigration::migrateToCurrent(outerTree)) {
@@ -92,10 +87,8 @@ void PresetManager::loadStateInformation(
       if (outerTree.isValid() && outerTree.getType() == apvts.state.getType()) {
 
         // Wrap it so it can pass through the migration layer organically
-        juce::ValueTree wrapper{
-            juce::Identifier(juce::String(std::string(schema::presetTag)))};
-        wrapper.setProperty(juce::String(std::string(schema::versionAttr)), 0,
-                            nullptr);
+        juce::ValueTree wrapper{juce::Identifier(juce::String(std::string(schema::presetTag)))};
+        wrapper.setProperty(juce::String(std::string(schema::versionAttr)), 0, nullptr);
         wrapper.addChild(outerTree, -1, nullptr);
 
         if (PresetMigration::migrateToCurrent(wrapper)) {

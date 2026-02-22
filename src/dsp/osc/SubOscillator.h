@@ -10,7 +10,9 @@ class SubOscillator {
 public:
   SubOscillator() = default;
 
-  void prepare(double newSampleRate) { sampleRate = newSampleRate; }
+  void prepare(double newSampleRate) {
+    sampleRate = newSampleRate;
+  }
 
   void setFrequency(float newFrequency) {
     frequency = newFrequency;

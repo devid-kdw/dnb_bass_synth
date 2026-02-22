@@ -17,8 +17,7 @@ public:
     if (timeMs <= 0.0f) {
       alpha = 0.0f;
     } else {
-      alpha =
-          static_cast<float>(std::exp(-1.0 / ((timeMs * 0.001f) * sampleRate)));
+      alpha = static_cast<float>(std::exp(-1.0 / ((timeMs * 0.001f) * sampleRate)));
     }
   }
 
@@ -27,7 +26,9 @@ public:
     targetValue = initialValue;
   }
 
-  void setTarget(float newTarget) { targetValue = newTarget; }
+  void setTarget(float newTarget) {
+    targetValue = newTarget;
+  }
 
   // Processes one smoothing step and returns the smoothed value.
   [[nodiscard]] inline float process() {
@@ -46,7 +47,9 @@ public:
     return currentValue;
   }
 
-  [[nodiscard]] inline float getCurrent() const { return currentValue; }
+  [[nodiscard]] inline float getCurrent() const {
+    return currentValue;
+  }
 
 private:
   float alpha = 0.0f;

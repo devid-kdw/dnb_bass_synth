@@ -33,8 +33,8 @@ public:
     }
 
     // Linear ramp up
-    float multiplier = static_cast<float>(currentSampleIndex) /
-                       static_cast<float>(rampLengthInSamples);
+    float multiplier =
+        static_cast<float>(currentSampleIndex) / static_cast<float>(rampLengthInSamples);
     currentSampleIndex++;
 
     return sample * multiplier;

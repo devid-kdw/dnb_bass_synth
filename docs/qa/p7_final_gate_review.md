@@ -76,3 +76,7 @@ Rationale:
 3. UI skin integration passes manifest/count/naming/integrity checks.
 4. No blocking deviations against knowledge documents were found for current phase scope.
 
+## 6. Post-Gate Addendum
+Nakon ove gate odluke izveden je dodatni DAW hotfix paket na zahtjev korisnickog testiranja.
+Closure i re-verifikacija su dokumentirani u:
+- `docs/qa/p7_post_gate_daw_hotfix_review.md`

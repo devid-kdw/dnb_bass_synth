@@ -186,13 +186,26 @@ DoD:
 Status: `Planned`  
 Primary owner: Orchestrator  
 Frontend role: support
+Detailed kickoff checklist: `docs/agent_briefs/frontend_ui_p8_kickoff_tasklist.md`
 
 Taskovi:
-1. Pomoć pri integraciji UI build/test checkova u CI.
-2. Verificirati da CI pokriva frontend binding regressije.
+1. Uskladiti frontend contract checks za CI:
+   - canonical `param_id` provjera za UI binding layer
+   - zabrana legacy ID referenci (`style.morph`)
+2. Uskladiti asset integrity checks za CI:
+   - runtime UI asseti moraju biti uskladeni s manifestom
+   - bez missing/dead control stateova
+3. Osigurati da CI capturea UI regressije koje su bile vidljive u DAW testu:
+   - knob endpoint/value-arc korelacija
+   - center visual panel layering (bez static/runtime overlapa)
+4. Azurirati frontend QA evidence dokumente za MVP release candidate.
+5. Predati P8 frontend handoff sa exact commandima i rezultatima.
 
 DoD:
 1. Frontend checkovi reproducibilni kroz CI.
+2. Contract i asset checks prolaze bez manualnog overridea.
+3. Predan handoff packet:
+   - `docs/qa/frontend_phase_handoffs/P8_handoff.md`
 
 ## 11. Handoff packet format (obavezno po fazi)
 Za svaku završenu fazu frontend agent mora predati:

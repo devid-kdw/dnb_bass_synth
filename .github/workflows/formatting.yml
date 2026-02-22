@@ -1,7 +1,53 @@
-name: formatting
-on: [push, pull_request]
+name: formatting-and-lint
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
 jobs:
-  placeholder:
+  format-check:
+    name: format-check
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - run: echo "Formatting skeleton - implement in Phase 8"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+
+      - name: Run clang-format dry-run gate
+        run: bash tools/scripts/format.sh --check
+
+  lint-check:
+    name: lint-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install lint dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy ninja-build
+
+      - name: Init submodules
+        run: bash tools/scripts/init_submodules.sh
+
+      - name: Configure compile commands for lint
+        run: >
+          cmake -S . -B build_lint -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          -DDNB_ENABLE_PLUGIN_TARGET=OFF
+          -DDNB_BUILD_TESTS=ON
+          -DDNB_BUILD_BENCH=OFF
+
+      - name: Run clang-tidy lint gate
+        run: bash tools/scripts/lint.sh --build-dir build_lint

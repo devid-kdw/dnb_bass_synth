@@ -15,17 +15,16 @@ namespace ui {
 class MainLayout : public juce::Component {
 public:
   MainLayout() {
-    bgImg = juce::ImageCache::getFromMemory(
-        UIAssets::ui_background_root_main_base_v001_png,
-        UIAssets::ui_background_root_main_base_v001_pngSize);
+    bgImg = juce::ImageCache::getFromMemory(UIAssets::ui_background_root_main_base_v001_png,
+                                            UIAssets::ui_background_root_main_base_v001_pngSize);
 
-    noiseImg = juce::ImageCache::getFromMemory(
-        UIAssets::ui_background_root_noise_base_v001_png,
-        UIAssets::ui_background_root_noise_base_v001_pngSize);
+    noiseImg =
+        juce::ImageCache::getFromMemory(UIAssets::ui_background_root_noise_base_v001_png,
+                                        UIAssets::ui_background_root_noise_base_v001_pngSize);
 
-    titlePlateImg = juce::ImageCache::getFromMemory(
-        UIAssets::ui_panel_header_titleplate_base_v001_png,
-        UIAssets::ui_panel_header_titleplate_base_v001_pngSize);
+    titlePlateImg =
+        juce::ImageCache::getFromMemory(UIAssets::ui_panel_header_titleplate_base_v001_png,
+                                        UIAssets::ui_panel_header_titleplate_base_v001_pngSize);
 
     addAndMakeVisible(styleSelector);
     addAndMakeVisible(styleMorph);
@@ -34,34 +33,32 @@ public:
   }
 
   void resized() override {
-    auto bounds =
-        getLocalBounds().reduced(20, 25); // General padding matching design
+    auto bounds = getLocalBounds().reduced(20, 22);
 
-    // The header is now an image plate, we define its bounds but draw it in
-    // paint
-    titlePlateBounds = bounds.removeFromTop(45).withWidth(400).withX(
-        bounds.getX() + (bounds.getWidth() - 400) / 2);
-    bounds.removeFromTop(10);
+    const int sectionGap = 12;
+    const int centeredWidth = juce::jmax(420, juce::jmin(bounds.getWidth() - 90, 760));
 
-    // Style Selector
-    styleSelector.setBounds(bounds.removeFromTop(45).withWidth(280).withX(
-        bounds.getX() + (bounds.getWidth() - 280) / 2));
-    bounds.removeFromTop(15);
+    titlePlateBounds = bounds.removeFromTop(52)
+                           .withWidth(centeredWidth)
+                           .withX(bounds.getX() + (bounds.getWidth() - centeredWidth) / 2);
+    bounds.removeFromTop(sectionGap);
 
-    // Style Morph Slider
-    styleMorph.setBounds(bounds.removeFromTop(60).withWidth(320).withX(
-        bounds.getX() + (bounds.getWidth() - 320) / 2));
-    bounds.removeFromTop(20);
+    styleSelector.setBounds(bounds.removeFromTop(92)
+                                .withWidth(centeredWidth)
+                                .withX(bounds.getX() + (bounds.getWidth() - centeredWidth) / 2));
+    bounds.removeFromTop(sectionGap);
 
-    // Visual Feedback Area
-    visualFeedback.setBounds(bounds.removeFromTop(140).withWidth(420).withX(
-        bounds.getX() + (bounds.getWidth() - 420) / 2));
-    bounds.removeFromTop(20);
+    styleMorph.setBounds(bounds.removeFromTop(82)
+                             .withWidth(centeredWidth)
+                             .withX(bounds.getX() + (bounds.getWidth() - centeredWidth) / 2));
+    bounds.removeFromTop(sectionGap);
 
-    // Canonical MVP macros + Advanced Macros (10 Total)
-    // Fits rest of area
-    macroPanel.setBounds(
-        bounds.withWidth(bounds.getWidth() - 20).withX(bounds.getX() + 10));
+    visualFeedback.setBounds(bounds.removeFromTop(170)
+                                 .withWidth(centeredWidth)
+                                 .withX(bounds.getX() + (bounds.getWidth() - centeredWidth) / 2));
+    bounds.removeFromTop(sectionGap);
+
+    macroPanel.setBounds(bounds.reduced(6, 0));
   }
 
   void paint(juce::Graphics &g) override {
@@ -79,11 +76,25 @@ public:
       g.drawImage(titlePlateImg, titlePlateBounds.toFloat(),
                   juce::RectanglePlacement::stretchToFit);
     }
+
+    g.setFont(juce::Font(18.0f, juce::Font::bold));
+    g.setColour(juce::Colours::white.withAlpha(0.92f));
+    g.drawFittedText("DnB Bass Synth", titlePlateBounds.reduced(18, 6),
+                     juce::Justification::centredLeft, 1);
   }
 
-  StyleMorphControl &getStyleMorphControl() { return styleMorph; }
-  StyleSelector &getStyleSelector() { return styleSelector; }
-  MacroPanel &getMacroPanel() { return macroPanel; }
+  StyleMorphControl &getStyleMorphControl() {
+    return styleMorph;
+  }
+  StyleSelector &getStyleSelector() {
+    return styleSelector;
+  }
+  MacroPanel &getMacroPanel() {
+    return macroPanel;
+  }
+  VisualFeedbackView &getVisualFeedbackView() {
+    return visualFeedback;
+  }
 
 private:
   juce::Image bgImg;

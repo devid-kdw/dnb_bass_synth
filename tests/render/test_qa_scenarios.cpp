@@ -73,8 +73,7 @@ TEST_CASE("Long note stability (Denormal flush)", "[render][qa]") {
 
   // Process many blocks (release tail)
   for (int i = 0; i < 500; ++i) {
-    engine.processBlock(block.getWritePointer(0), block.getWritePointer(1),
-                        512);
+    engine.processBlock(block.getWritePointer(0), block.getWritePointer(1), 512);
   }
 
   // Tail should have decayed, flush to zero, no extreme small numbers
@@ -106,8 +105,7 @@ TEST_CASE("Preset load stress test", "[render][qa]") {
 
     // This validates the setParameters / engine sync does not crash or emit
     // NaNs
-    engine.processBlock(block.getWritePointer(0), block.getWritePointer(1),
-                        512);
+    engine.processBlock(block.getWritePointer(0), block.getWritePointer(1), 512);
 
     auto *L = block.getReadPointer(0);
     for (int s = 0; s < 512; ++s) {

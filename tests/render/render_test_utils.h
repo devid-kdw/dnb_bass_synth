@@ -9,9 +9,8 @@ using namespace dnb::engine;
 using namespace dnb::domain;
 
 // Utilities for render tests
-inline void
-applyTestParams(SynthEngine &engine,
-                std::function<void(ResolvedParams &)> mutator = nullptr) {
+inline void applyTestParams(SynthEngine &engine,
+                            std::function<void(ResolvedParams &)> mutator = nullptr) {
   ResolvedParams params;
 
   // Default safe baseline for tests

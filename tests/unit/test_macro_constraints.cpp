@@ -3,8 +3,7 @@
 
 using namespace dnb::domain;
 
-TEST_CASE("Macro changes respect constraints engine constraints",
-          "[domain][macros]") {
+TEST_CASE("Macro changes respect constraints engine constraints", "[domain][macros]") {
   ConstraintEngine engine;
   RawInputParams input;
 

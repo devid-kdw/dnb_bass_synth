@@ -8,8 +8,7 @@
 
 class DnBBassSynthAudioProcessor;
 
-class DnBBassSynthAudioProcessorEditor final
-    : public juce::AudioProcessorEditor {
+class DnBBassSynthAudioProcessorEditor final : public juce::AudioProcessorEditor {
 public:
   explicit DnBBassSynthAudioProcessorEditor(DnBBassSynthAudioProcessor &);
   ~DnBBassSynthAudioProcessorEditor() override;

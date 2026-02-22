@@ -23,49 +23,34 @@ public:
     using namespace dnb::domain::parameters;
 
     // 1. Bind Macros
-    bindSlider(macroPanel.getSlider(MacroPanel::NeuroFormant),
-               std::string(macroNeuroFormant.id));
-    bindSlider(macroPanel.getSlider(MacroPanel::FmMetal),
-               std::string(macroFmMetal.id));
-    bindSlider(macroPanel.getSlider(MacroPanel::RollerDynamics),
-               std::string(macroRollerDyn.id));
-    bindSlider(macroPanel.getSlider(MacroPanel::LiquidDepth),
-               std::string(macroLiquidDepth.id));
-    bindSlider(macroPanel.getSlider(MacroPanel::SubPunch),
-               std::string(macroSubPunch.id));
-    bindSlider(macroPanel.getSlider(MacroPanel::FmPressure),
-               std::string(macroFmPressure.id));
-    bindSlider(macroPanel.getSlider(MacroPanel::CutoffMotion),
-               std::string(macroCutoffMotion.id));
-    bindSlider(macroPanel.getSlider(MacroPanel::FoldBite),
-               std::string(macroFoldBite.id));
-    bindSlider(macroPanel.getSlider(MacroPanel::TableDrift),
-               std::string(macroTableDrift.id));
-    bindSlider(macroPanel.getSlider(MacroPanel::SmashGlue),
-               std::string(macroSmashGlue.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::NeuroFormant), std::string(macroNeuroFormant.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::FmMetal), std::string(macroFmMetal.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::RollerDynamics), std::string(macroRollerDyn.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::LiquidDepth), std::string(macroLiquidDepth.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::SubPunch), std::string(macroSubPunch.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::FmPressure), std::string(macroFmPressure.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::CutoffMotion), std::string(macroCutoffMotion.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::FoldBite), std::string(macroFoldBite.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::TableDrift), std::string(macroTableDrift.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::SmashGlue), std::string(macroSmashGlue.id));
 
     // 2. Bind Style Morph Slider
     bindSlider(styleMorph.getSlider(), std::string(macroStyleMorph.id));
 
     // 3. Bind Style Selector to 3-state APVTS choice (Tech/Neuro/Dark)
     styleModeAttachment = std::make_unique<StyleModeAttachment>(
-        apvts, juce::String(std::string(styleMode.id)),
-        styleSelector.getTechButton(), styleSelector.getNeuroButton(),
-        styleSelector.getDarkButton());
+        apvts, juce::String(std::string(styleMode.id)), styleSelector.getTechButton(),
+        styleSelector.getNeuroButton(), styleSelector.getDarkButton());
   }
 
 private:
-  class StyleModeAttachment
-      : private juce::AudioProcessorValueTreeState::Listener,
-        private juce::AsyncUpdater {
+  class StyleModeAttachment : private juce::AudioProcessorValueTreeState::Listener,
+                              private juce::AsyncUpdater {
   public:
-    StyleModeAttachment(juce::AudioProcessorValueTreeState &state,
-                        const juce::String &paramID,
-                        juce::ToggleButton &techButton,
-                        juce::ToggleButton &neuroButton,
+    StyleModeAttachment(juce::AudioProcessorValueTreeState &state, const juce::String &paramID,
+                        juce::ToggleButton &techButton, juce::ToggleButton &neuroButton,
                         juce::ToggleButton &darkButton)
-        : apvts(state), styleModeParamID(paramID),
-          buttons{&techButton, &neuroButton, &darkButton},
+        : apvts(state), styleModeParamID(paramID), buttons{&techButton, &neuroButton, &darkButton},
           styleParameter(apvts.getParameter(styleModeParamID)) {
       if (buttons[modeTech] != nullptr) {
         buttons[modeTech]->onClick = [this] { setStyleMode(modeTech); };
@@ -107,8 +92,7 @@ private:
         return;
       }
 
-      const float normalizedValue =
-          styleParameter->convertTo0to1(static_cast<float>(clampedIndex));
+      const float normalizedValue = styleParameter->convertTo0to1(static_cast<float>(clampedIndex));
       styleParameter->beginChangeGesture();
       styleParameter->setValueNotifyingHost(normalizedValue);
       styleParameter->endChangeGesture();
@@ -120,8 +104,7 @@ private:
         return modeTech;
       }
 
-      const float plainValue =
-          styleParameter->convertFrom0to1(styleParameter->getValue());
+      const float plainValue = styleParameter->convertFrom0to1(styleParameter->getValue());
       return juce::jlimit(modeTech, modeDark, juce::roundToInt(plainValue));
     }
 
@@ -129,21 +112,18 @@ private:
       juce::ScopedValueSetter<bool> syncingFlag(isSynchronizing, true);
       for (int i = modeTech; i <= modeDark; ++i) {
         if (auto *button = buttons[static_cast<size_t>(i)]) {
-          button->setToggleState(i == activeModeIndex,
-                                 juce::dontSendNotification);
+          button->setToggleState(i == activeModeIndex, juce::dontSendNotification);
         }
       }
     }
 
-    void parameterChanged(const juce::String &parameterID,
-                          const float newValue) override {
+    void parameterChanged(const juce::String &parameterID, const float newValue) override {
       if (parameterID != styleModeParamID || styleParameter == nullptr) {
         return;
       }
 
-      pendingModeIndex.store(
-          juce::jlimit(modeTech, modeDark, juce::roundToInt(newValue)),
-          std::memory_order_relaxed);
+      pendingModeIndex.store(juce::jlimit(modeTech, modeDark, juce::roundToInt(newValue)),
+                             std::memory_order_relaxed);
       triggerAsyncUpdate();
     }
 
@@ -169,8 +149,7 @@ private:
 
   juce::AudioProcessorValueTreeState &apvts;
   std::unique_ptr<StyleModeAttachment> styleModeAttachment;
-  std::vector<
-      std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
+  std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>>
       sliderAttachments;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BindingLayer)

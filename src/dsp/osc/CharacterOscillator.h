@@ -33,8 +33,7 @@ public:
     // OS rate = sampleRate * 4
     double osRate = sampleRate * 4.0;
     phaseIncrement = static_cast<float>(frequency * (2.0 * M_PI / osRate));
-    fmIncrement =
-        static_cast<float>((frequency * fmRatio) * (2.0 * M_PI / osRate));
+    fmIncrement = static_cast<float>((frequency * fmRatio) * (2.0 * M_PI / osRate));
   }
 
   void setFMDepth(float newDepth) {
@@ -65,12 +64,11 @@ public:
       float modulator = std::sin(fmPhase);
 
       // Add Table Drift Phase Modulation
-      float pmOffset =
-          std::sin(currentPhase * 0.5f) * pmDepth * static_cast<float>(M_PI);
+      float pmOffset = std::sin(currentPhase * 0.5f) * pmDepth * static_cast<float>(M_PI);
 
       // Carrier
-      float output = std::sin(currentPhase + pmOffset +
-                              (modulator * fmDepth * static_cast<float>(M_PI)));
+      float output =
+          std::sin(currentPhase + pmOffset + (modulator * fmDepth * static_cast<float>(M_PI)));
 
       // Tick phases
       currentPhase += phaseIncrement;

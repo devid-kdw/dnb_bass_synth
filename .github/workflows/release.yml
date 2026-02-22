@@ -1,10 +1,233 @@
 name: release
+
 on:
   push:
     tags:
       - 'v*.*.*'
+
+permissions:
+  contents: read
+
 jobs:
-  placeholder:
-    runs-on: ubuntu-latest
+  backend_quality_gates_release_macos:
+    name: backend-quality-gates-release-macos
+    runs-on: macos-14
+    timeout-minutes: 45
     steps:
-      - run: echo "Release skeleton - implement in Phase 8"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Init submodules
+        run: bash tools/scripts/init_submodules.sh
+
+      - name: Configure (Release)
+        run: >
+          cmake -S . -B build -G "Unix Makefiles"
+          -DCMAKE_BUILD_TYPE=Release
+          -DDNB_ENABLE_PLUGIN_TARGET=ON
+          -DDNB_BUILD_TESTS=ON
+          -DDNB_BUILD_BENCH=OFF
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Backend test binaries coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          for bin in domain_tests engine_tests dsp_tests render_tests preset_tests; do
+            if [[ ! -x "./build/tests/${bin}" ]]; then
+              echo "Missing backend test binary: ${bin}"
+              exit 1
+            fi
+            "./build/tests/${bin}" --list-test-names-only > /dev/null
+          done
+
+      - name: CTest full suite
+        run: cd build && ctest --output-on-failure
+
+  backend_quality_gates_release_windows:
+    name: backend-quality-gates-release-windows
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Init submodules
+        shell: bash
+        run: bash tools/scripts/init_submodules.sh
+
+      - name: Configure (Release, Visual Studio 2022)
+        run: >
+          cmake -S . -B build
+          -G "Visual Studio 17 2022"
+          -A x64
+          -DDNB_ENABLE_PLUGIN_TARGET=ON
+          -DDNB_BUILD_TESTS=ON
+          -DDNB_BUILD_BENCH=OFF
+
+      - name: Build (Release)
+        run: cmake --build build --config Release --parallel
+
+      - name: Backend test binaries coverage
+        shell: pwsh
+        run: |
+          $bins = @("domain_tests","engine_tests","dsp_tests","render_tests","preset_tests")
+          foreach ($bin in $bins) {
+            $candidate = Get-ChildItem -Path build -Recurse -Filter "$bin.exe" | Select-Object -First 1
+            if (-not $candidate) {
+              throw "Missing backend test binary: $bin.exe"
+            }
+            & $candidate.FullName --list-test-names-only *> $null
+          }
+
+      - name: CTest full suite
+        run: cd build && ctest -C Release --output-on-failure
+
+  release_artifact_with_checksum_macos:
+    name: release-artifact-with-checksum-macos
+    needs: backend_quality_gates_release_macos
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Init submodules
+        run: bash tools/scripts/init_submodules.sh
+
+      - name: Configure (Release package)
+        run: >
+          cmake -S . -B build -G "Unix Makefiles"
+          -DCMAKE_BUILD_TYPE=Release
+          -DDNB_ENABLE_PLUGIN_TARGET=ON
+          -DDNB_BUILD_TESTS=ON
+          -DDNB_BUILD_BENCH=OFF
+
+      - name: Build release artifacts
+        run: cmake --build build --parallel
+
+      - name: Re-check backend quality gates
+        run: cd build && ctest --output-on-failure
+
+      - name: Package VST3 artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact_dir=""
+          if [[ -d "build/DnBBassSynth_artefacts/Release/VST3" ]]; then
+            artifact_dir="build/DnBBassSynth_artefacts/Release/VST3"
+          elif [[ -d "build/DnBBassSynth_artefacts/VST3" ]]; then
+            artifact_dir="build/DnBBassSynth_artefacts/VST3"
+          fi
+          archive_dir="build/release_bundle"
+          archive_path="${archive_dir}/DnBBassSynth_vst3_${GITHUB_REF_NAME}.zip"
+          if [[ -z "${artifact_dir}" ]]; then
+            echo "Expected artifact directory missing under build/DnBBassSynth_artefacts"
+            exit 1
+          fi
+          mkdir -p "${archive_dir}"
+          zip -r "${archive_path}" "${artifact_dir}"
+
+      - name: Generate SHA256 checksum evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive_path="build/release_bundle/DnBBassSynth_vst3_${GITHUB_REF_NAME}.zip"
+          checksum_path="${archive_path}.sha256"
+          shasum -a 256 "${archive_path}" | tee "${checksum_path}"
+          {
+            echo "### Release checksum evidence"
+            echo ""
+            echo "- Artifact: \`${archive_path}\`"
+            echo "- SHA256:"
+            echo '```'
+            cat "${checksum_path}"
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload release artifact and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-vst3-macos-${{ github.ref_name }}
+          path: |
+            build/release_bundle/DnBBassSynth_vst3_${{ github.ref_name }}.zip
+            build/release_bundle/DnBBassSynth_vst3_${{ github.ref_name }}.zip.sha256
+
+  release_artifact_with_checksum_windows:
+    name: release-artifact-with-checksum-windows
+    needs: backend_quality_gates_release_windows
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Init submodules
+        shell: bash
+        run: bash tools/scripts/init_submodules.sh
+
+      - name: Configure (Release, Visual Studio 2022)
+        run: >
+          cmake -S . -B build
+          -G "Visual Studio 17 2022"
+          -A x64
+          -DDNB_ENABLE_PLUGIN_TARGET=ON
+          -DDNB_BUILD_TESTS=ON
+          -DDNB_BUILD_BENCH=OFF
+
+      - name: Build release artifacts (Release)
+        run: cmake --build build --config Release --parallel
+
+      - name: Re-check backend quality gates
+        run: cd build && ctest -C Release --output-on-failure
+
+      - name: Package VST3 artifact
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "build/DnBBassSynth_artefacts/Release/VST3",
+            "build/DnBBassSynth_artefacts/VST3"
+          )
+          $artifactDir = $null
+          foreach ($candidate in $candidates) {
+            if (Test-Path $candidate) {
+              $artifactDir = $candidate
+              break
+            }
+          }
+          if (-not $artifactDir) {
+            throw "Expected artifact directory missing under build/DnBBassSynth_artefacts"
+          }
+          New-Item -ItemType Directory -Force -Path build/release_bundle | Out-Null
+          $archivePath = "build/release_bundle/DnBBassSynth_vst3_${env:GITHUB_REF_NAME}_windows.zip"
+          if (Test-Path $archivePath) {
+            Remove-Item $archivePath -Force
+          }
+          Compress-Archive -Path (Join-Path $artifactDir '*') -DestinationPath $archivePath
+
+      - name: Generate SHA256 checksum evidence
+        shell: pwsh
+        run: |
+          $archivePath = "build/release_bundle/DnBBassSynth_vst3_${env:GITHUB_REF_NAME}_windows.zip"
+          $checksumPath = "$archivePath.sha256"
+          $hash = (Get-FileHash -Algorithm SHA256 -Path $archivePath).Hash.ToLower()
+          "$hash  $(Split-Path -Leaf $archivePath)" | Out-File -FilePath $checksumPath -Encoding ascii
+          @"
+          ### Release checksum evidence (windows)
+
+          - Artifact: `$archivePath`
+          - SHA256:
+          ```
+          $hash  $(Split-Path -Leaf $archivePath)
+          ```
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+
+      - name: Upload release artifact and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-vst3-windows-${{ github.ref_name }}
+          path: |
+            build/release_bundle/DnBBassSynth_vst3_${{ github.ref_name }}_windows.zip
+            build/release_bundle/DnBBassSynth_vst3_${{ github.ref_name }}_windows.zip.sha256

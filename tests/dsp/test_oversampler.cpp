@@ -18,7 +18,7 @@ TEST_CASE("Oversampler polyphase FIR structure works", "[dsp][core]") {
     }
 
     // Upsample
-    float *upsampled = os.processUp(input.data(), 200);
+    os.processUp(input.data(), 200);
 
     // Downsample
     std::vector<float> output(200, 0.0f);
@@ -34,14 +34,13 @@ TEST_CASE("Oversampler polyphase FIR structure works", "[dsp][core]") {
     REQUIRE(mag < 0.5f);
   }
 
-  SECTION(
-      "Exceeding prepared maxBlockSize processes safely without allocation") {
+  SECTION("Exceeding prepared maxBlockSize processes safely without allocation") {
     // os was prepared with maxBlockSize = 256
     // We send 300 samples
     std::vector<float> largeInput(300, 1.0f);
 
     // This should not crash or allocate
-    float *upsampled = os.processUp(largeInput.data(), 300);
+    os.processUp(largeInput.data(), 300);
 
     // Downsample back
     std::vector<float> largeOutput(300, 0.0f);

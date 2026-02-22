@@ -1,5 +1,7 @@
 #include "ConstraintEngine.h"
 #include "DnBLimits.h"
+#include <algorithm>
+#include <cmath>
 
 namespace dnb::domain {
 
@@ -18,7 +20,6 @@ ResolvedParams ConstraintEngine::process(const RawInputParams &input) const {
 
   // 4. Macro processing
   const auto neuroOut = macros::applyNeuroFormant(input.macroNeuroFormant);
-  const float fmRatioTarget = macros::applyFmMetal(input.macroFmMetal);
   const float liquidVal = macros::applyLiquidDepth(input.macroLiquidDepth);
 
   // Roller dynamics wiring (F-P5R2-001)
@@ -31,16 +32,17 @@ ResolvedParams ConstraintEngine::process(const RawInputParams &input) const {
   out.filterCutoff += rollerVal * 2000.0f;
 
   // 5. Build outputs from macros with clamping
-  out.xoverFreq = limits::clampCrossover(limits::defaultCrossoverHz +
-                                         neuroOut.xoverFreqModifier);
+  out.xoverFreq = limits::clampCrossover(limits::defaultCrossoverHz + neuroOut.xoverFreqModifier);
 
-  // 5a. Style mode gates (e.g. FM Metal is only active if the style allows
-  // harsh dist)
-  if (styleMods.enableFMMetal) {
-    out.fmRatio = limits::snapFMRatio(fmRatioTarget);
-  } else {
-    out.fmRatio = limits::defaultFMRatio;
-  }
+  // 5a. Style-dependent FM range.
+  // Tech keeps a narrower FM range, Neuro extends it, Dark unlocks full range.
+  constexpr int baseFmIndex = 1; // 1.41 as stable default at macro=0
+  const int maxFmIndex = std::clamp(styleMods.fmMetalMaxRatioIndex, baseFmIndex,
+                                    static_cast<int>(limits::allowedFMRatios.size()) - 1);
+  const float fmMacro = std::clamp(input.macroFmMetal, 0.0f, 1.0f);
+  const int span = maxFmIndex - baseFmIndex;
+  const int mappedIndex = baseFmIndex + static_cast<int>(std::lround(fmMacro * span));
+  out.fmRatio = limits::allowedFMRatios[std::clamp(mappedIndex, baseFmIndex, maxFmIndex)];
 
   out.distAmount = neuroOut.distAmount;
 
@@ -53,8 +55,7 @@ ResolvedParams ConstraintEngine::process(const RawInputParams &input) const {
 
   // 6. Clamp OTT based on style modifier cap
   out.ottDepth = limits::clampOtt(
-      std::min(neuroOut.ottDepthTarget + input.macroSmashGlue * 0.4f,
-               styleMods.maxOttDepth));
+      std::min(neuroOut.ottDepthTarget + input.macroSmashGlue * 0.4f, styleMods.maxOttDepth));
 
   // 7. Macro 10 additions
 
@@ -85,8 +86,7 @@ ResolvedParams ConstraintEngine::process(const RawInputParams &input) const {
   if (input.activeStyle == style::Mode::Tech) {
     out.foldDrive *= 0.5f; // Tech prefers cleaner wavefolding
   } else if (input.activeStyle == style::Mode::Dark) {
-    out.foldDrive =
-        std::min(1.0f, out.foldDrive * 1.5f); // Dark drives it harder
+    out.foldDrive = std::min(1.0f, out.foldDrive * 1.5f); // Dark drives it harder
   }
 
   // 7.5 Table drift provides organic wavetable position offset

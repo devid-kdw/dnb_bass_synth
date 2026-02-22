@@ -216,13 +216,29 @@ DoD:
 Status: `Planned`  
 Primary owner: Orchestrator  
 Backend role: support
+Detailed kickoff checklist: `docs/agent_briefs/backend_dsp_p8_kickoff_tasklist.md`
 
 Taskovi:
-1. Pomoć pri test command integraciji i CI troubleshootingu.
-2. Validacija da CI pokreće backend test/bench setove.
+1. Uskladiti backend test matrix za CI:
+   - `domain_tests`
+   - `engine_tests`
+   - `dsp_tests`
+   - `render_tests`
+   - `preset_tests`
+2. Dodati reproducibilne backend quality-gate komande u CI kontekst:
+   - `cmake --build build --parallel`
+   - `cd build && ctest --output-on-failure`
+3. Uskladiti bench smoke policy za CI:
+   - zadrzati bench komande kao non-blocking evidence job ako su debug buildovi
+   - osigurati da bench job ne uvodi false-fail u MVP gate
+4. Potvrditi da release-artefakt korak ne zaobilazi domain granice ni DSP safety testove.
+5. Predati P8 backend handoff sa closure mapom i CI evidence summary.
 
 DoD:
-1. CI može reproducirati backend quality gates.
+1. CI reproducira backend quality gates bez manualnog patchanja.
+2. `ctest` matrix je deterministic i dokumentiran.
+3. Predan handoff packet:
+   - `docs/qa/backend_phase_handoffs/P8_handoff.md`
 
 ## 11. Handoff packet format (obavezno po fazi)
 Za svaku završenu fazu backend agent mora predati:

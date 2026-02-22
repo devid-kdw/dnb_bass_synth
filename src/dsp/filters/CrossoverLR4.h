@@ -60,16 +60,16 @@ public:
   // Process a single sample, splitting into sub and character bands
   inline void process(float input, float &outLow, float &outHigh) {
     // Stage 1 LP
-    float lp1 = c_b0_lp * input + c_b1_lp * z1_lp[0] + c_b2_lp * z2_lp[0] -
-                c_a1_lp * z1_lp[1] - c_a2_lp * z2_lp[1];
+    float lp1 = c_b0_lp * input + c_b1_lp * z1_lp[0] + c_b2_lp * z2_lp[0] - c_a1_lp * z1_lp[1] -
+                c_a2_lp * z2_lp[1];
     z2_lp[0] = z1_lp[0];
     z1_lp[0] = input;
     z2_lp[1] = z1_lp[1];
     z1_lp[1] = lp1;
 
     // Stage 2 LP
-    float lp2 = c_b0_lp * lp1 + c_b1_lp * z1_lp[2] + c_b2_lp * z2_lp[2] -
-                c_a1_lp * z1_lp[3] - c_a2_lp * z2_lp[3];
+    float lp2 = c_b0_lp * lp1 + c_b1_lp * z1_lp[2] + c_b2_lp * z2_lp[2] - c_a1_lp * z1_lp[3] -
+                c_a2_lp * z2_lp[3];
     z2_lp[2] = z1_lp[2];
     z1_lp[2] = lp1;
     z2_lp[3] = z1_lp[3];
@@ -78,16 +78,16 @@ public:
     outLow = lp2;
 
     // Stage 1 HP
-    float hp1 = c_b0_hp * input + c_b1_hp * z1_hp[0] + c_b2_hp * z2_hp[0] -
-                c_a1_hp * z1_hp[1] - c_a2_hp * z2_hp[1];
+    float hp1 = c_b0_hp * input + c_b1_hp * z1_hp[0] + c_b2_hp * z2_hp[0] - c_a1_hp * z1_hp[1] -
+                c_a2_hp * z2_hp[1];
     z2_hp[0] = z1_hp[0];
     z1_hp[0] = input;
     z2_hp[1] = z1_hp[1];
     z1_hp[1] = hp1;
 
     // Stage 2 HP
-    float hp2 = c_b0_hp * hp1 + c_b1_hp * z1_hp[2] + c_b2_hp * z2_hp[2] -
-                c_a1_hp * z1_hp[3] - c_a2_hp * z2_hp[3];
+    float hp2 = c_b0_hp * hp1 + c_b1_hp * z1_hp[2] + c_b2_hp * z2_hp[2] - c_a1_hp * z1_hp[3] -
+                c_a2_hp * z2_hp[3];
     z2_hp[2] = z1_hp[2];
     z1_hp[2] = hp1;
     z2_hp[3] = z1_hp[3];
@@ -100,10 +100,8 @@ public:
 private:
   double sampleRate = 44100.0;
 
-  float c_b0_lp = 0.f, c_b1_lp = 0.f, c_b2_lp = 0.f, c_a1_lp = 0.f,
-        c_a2_lp = 0.f;
-  float c_b0_hp = 0.f, c_b1_hp = 0.f, c_b2_hp = 0.f, c_a1_hp = 0.f,
-        c_a2_hp = 0.f;
+  float c_b0_lp = 0.f, c_b1_lp = 0.f, c_b2_lp = 0.f, c_a1_lp = 0.f, c_a2_lp = 0.f;
+  float c_b0_hp = 0.f, c_b1_hp = 0.f, c_b2_hp = 0.f, c_a1_hp = 0.f, c_a2_hp = 0.f;
 
   // Biquad histories (x1, y1, x2, y2)
   float z1_lp[4] = {0.f};

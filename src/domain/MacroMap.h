@@ -26,10 +26,8 @@ inline MacroOutputs applyNeuroFormant(float macroValue) {
 
 inline float applyFmMetal(float macroValue) {
   // Maps 0.0-1.0 to curated FM ratios
-  int index =
-      static_cast<int>(macroValue * (limits::allowedFMRatios.size() - 1));
-  return limits::allowedFMRatios[std::clamp(
-      index, 0, (int)limits::allowedFMRatios.size() - 1)];
+  int index = static_cast<int>(macroValue * (limits::allowedFMRatios.size() - 1));
+  return limits::allowedFMRatios[std::clamp(index, 0, (int)limits::allowedFMRatios.size() - 1)];
 }
 
 inline float applyLiquidDepth(float macroValue) {

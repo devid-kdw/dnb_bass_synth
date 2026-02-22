@@ -1,0 +1,4 @@
+Checks: '-*,clang-analyzer-*'
+WarningsAsErrors: 'clang-analyzer-*'
+HeaderFilterRegex: '^(src|tests|bench)/'
+FormatStyle: none

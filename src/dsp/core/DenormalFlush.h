@@ -2,8 +2,7 @@
 
 #include <cmath>
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) ||             \
-    defined(_M_IX86)
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
 #include <immintrin.h>
 #endif
 
@@ -14,8 +13,7 @@ namespace dnb::dsp::core {
 class ScopedDenormalFlush {
 public:
   ScopedDenormalFlush() {
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) ||             \
-    defined(_M_IX86)
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
     originalMxcsr = _mm_getcsr();
     // Set FZ (bit 15) and DAZ (bit 6)
     _mm_setcsr(originalMxcsr | 0x8040);
@@ -23,8 +21,7 @@ public:
   }
 
   ~ScopedDenormalFlush() {
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) ||             \
-    defined(_M_IX86)
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
     _mm_setcsr(originalMxcsr);
 #endif
   }
@@ -38,8 +35,7 @@ public:
   }
 
 private:
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) ||             \
-    defined(_M_IX86)
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
   unsigned int originalMxcsr;
 #endif
 };

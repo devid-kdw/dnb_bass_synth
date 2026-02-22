@@ -47,8 +47,7 @@ public:
     size_t clampedSamples = std::min(numSamples, maxBlockSize);
 
     // Render underlying voice
-    bool active = voiceManager.processBlock(subBuffer.data(), charBuffer.data(),
-                                            clampedSamples);
+    bool active = voiceManager.processBlock(subBuffer.data(), charBuffer.data(), clampedSamples);
 
     if (!active) {
       for (size_t i = 0; i < numSamples; ++i) {
@@ -71,8 +70,7 @@ public:
     // Morph 1.0 = boosted presence/drive character (e.g. 1.5f)
     float baseCharGain = 0.8f;
     float maxCharGain = 1.5f;
-    float charGain =
-        baseCharGain + (currentStyleMorph * (maxCharGain - baseCharGain));
+    float charGain = baseCharGain + (currentStyleMorph * (maxCharGain - baseCharGain));
 
     for (size_t i = 0; i < clampedSamples; ++i) {
       // Hard clip applied to character before mix to prevent it blowing up mix
@@ -109,9 +107,13 @@ public:
     }
   }
 
-  [[nodiscard]] float getStyleMorph() const { return currentStyleMorph; }
+  [[nodiscard]] float getStyleMorph() const {
+    return currentStyleMorph;
+  }
 
-  [[nodiscard]] bool isStyleMorphActive() const { return styleMorphActive; }
+  [[nodiscard]] bool isStyleMorphActive() const {
+    return styleMorphActive;
+  }
 
   void reset() {
     voiceManager.clear();
