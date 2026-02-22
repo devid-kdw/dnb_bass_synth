@@ -11,7 +11,7 @@ jobs:
   backend_quality_gates_macos:
     name: backend-quality-gates-macos
     runs-on: macos-14
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,8 +27,11 @@ jobs:
           -DDNB_BUILD_TESTS=ON
           -DDNB_BUILD_BENCH=ON
 
-      - name: Build
-        run: cmake --build build --parallel
+      - name: Build (verbose, bounded parallelism)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build build --parallel 2 --verbose
 
       - name: Frontend contract guards
         run: bash tools/scripts/check_frontend_contracts.sh
@@ -43,13 +46,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          missing=()
           for bin in domain_tests engine_tests dsp_tests render_tests preset_tests; do
             if [[ ! -x "./build/tests/${bin}" ]]; then
-              echo "Missing backend test binary: ${bin}"
-              exit 1
+              missing+=("${bin}")
+              continue
             fi
-            "./build/tests/${bin}" --list-test-names-only > /dev/null
+            echo "Found backend test binary: ./build/tests/${bin}"
           done
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "Missing backend test binaries: ${missing[*]}"
+            exit 1
+          fi
+          ctest -N --test-dir build
 
       - name: CTest full suite
         run: cd build && ctest --output-on-failure
@@ -149,7 +158,7 @@ jobs:
 
       - name: Build bench targets
         run: >
-          cmake --build build --parallel
+          cmake --build build --parallel 2
           --target bench_voice_cpu bench_oversampling bench_macro_updates
 
       - name: Run bench evidence (non-blocking)

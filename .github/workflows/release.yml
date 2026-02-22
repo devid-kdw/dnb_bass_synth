@@ -12,7 +12,7 @@ jobs:
   backend_quality_gates_release_macos:
     name: backend-quality-gates-release-macos
     runs-on: macos-14
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,20 +28,29 @@ jobs:
           -DDNB_BUILD_TESTS=ON
           -DDNB_BUILD_BENCH=OFF
 
-      - name: Build
-        run: cmake --build build --parallel
+      - name: Build (verbose, bounded parallelism)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build build --parallel 2 --verbose
 
       - name: Backend test binaries coverage
         shell: bash
         run: |
           set -euo pipefail
+          missing=()
           for bin in domain_tests engine_tests dsp_tests render_tests preset_tests; do
             if [[ ! -x "./build/tests/${bin}" ]]; then
-              echo "Missing backend test binary: ${bin}"
-              exit 1
+              missing+=("${bin}")
+              continue
             fi
-            "./build/tests/${bin}" --list-test-names-only > /dev/null
+            echo "Found backend test binary: ./build/tests/${bin}"
           done
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "Missing backend test binaries: ${missing[*]}"
+            exit 1
+          fi
+          ctest -N --test-dir build
 
       - name: CTest full suite
         run: cd build && ctest --output-on-failure
@@ -99,7 +108,7 @@ jobs:
     name: release-artifact-with-checksum-macos
     needs: backend_quality_gates_release_macos
     runs-on: macos-14
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -115,8 +124,11 @@ jobs:
           -DDNB_BUILD_TESTS=ON
           -DDNB_BUILD_BENCH=OFF
 
-      - name: Build release artifacts
-        run: cmake --build build --parallel
+      - name: Build release artifacts (verbose, bounded parallelism)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build build --parallel 2 --verbose
 
       - name: Re-check backend quality gates
         run: cd build && ctest --output-on-failure

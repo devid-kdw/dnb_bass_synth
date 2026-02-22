@@ -75,15 +75,44 @@ if [[ ! -f "${compile_db}" ]]; then
 fi
 
 lint_files=()
+
+collect_compile_files() {
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.[].file' "${compile_db}"
+    return 0
+  fi
+
+  if command -v rg >/dev/null 2>&1; then
+    rg -N --no-filename -o '"file": "[^"]+"' "${compile_db}" \
+      | sed -E 's/"file": "([^"]+)"/\1/'
+    return 0
+  fi
+
+  grep -oE '"file": "[^"]+"' "${compile_db}" \
+    | sed -E 's/"file": "([^"]+)"/\1/'
+}
+
 while IFS= read -r file; do
   lint_files+=("${file}")
 done < <(
-  rg -N --no-filename -o '"file": "[^"]+"' "${compile_db}" \
-    | sed -E 's/"file": "([^"]+)"/\1/' \
+  collect_compile_files \
     | sed 's#\\\\#/#g' \
     | sort -u \
-    | rg -N '(src|tests|bench)/.*\.(c|cc|cpp|cxx)$' \
-    | rg -N -v '/extern/'
+    | {
+      if command -v rg >/dev/null 2>&1; then
+        rg -N '(src|tests|bench)/.*\.(c|cc|cpp|cxx)$'
+      else
+        grep -E '(src|tests|bench)/.*\.(c|cc|cpp|cxx)$'
+      fi
+    } \
+    | {
+      if command -v rg >/dev/null 2>&1; then
+        rg -N -v '/extern/'
+      else
+        grep -Ev '/extern/'
+      fi
+    } \
+    || true
 )
 
 if [[ "${#lint_files[@]}" -eq 0 ]]; then
