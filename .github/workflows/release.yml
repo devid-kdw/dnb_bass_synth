@@ -73,14 +73,24 @@ jobs:
       - name: Backend test binaries coverage
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           $bins = @("domain_tests","engine_tests","dsp_tests","render_tests","preset_tests")
+          $missing = @()
           foreach ($bin in $bins) {
-            $candidate = Get-ChildItem -Path build -Recurse -Filter "$bin.exe" | Select-Object -First 1
+            $candidate = Get-ChildItem -Path build/tests/Release -Filter "$bin.exe" -File -ErrorAction SilentlyContinue | Select-Object -First 1
             if (-not $candidate) {
-              throw "Missing backend test binary: $bin.exe"
+              $candidate = Get-ChildItem -Path build -Recurse -Filter "$bin.exe" -File | Select-Object -First 1
             }
-            & $candidate.FullName --list-test-names-only *> $null
+            if (-not $candidate) {
+              $missing += "$bin.exe"
+              continue
+            }
+            Write-Host "Found backend test binary: $($candidate.FullName)"
           }
+          if ($missing.Count -gt 0) {
+            throw "Missing backend test binaries: $($missing -join ', ')"
+          }
+          ctest -N -C Release --test-dir build
 
       - name: CTest full suite
         run: cd build && ctest -C Release --output-on-failure
