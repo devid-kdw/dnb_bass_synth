@@ -94,7 +94,7 @@ jobs:
           cmake -S . -B build
           -G "Visual Studio 17 2022"
           -A x64
-          -DDNB_ENABLE_PLUGIN_TARGET=ON
+          -DDNB_ENABLE_PLUGIN_TARGET=OFF
           -DDNB_BUILD_TESTS=ON
           -DDNB_BUILD_BENCH=OFF
 
@@ -115,36 +115,6 @@ jobs:
 
       - name: CTest full suite
         run: cd build && ctest -C Debug --output-on-failure
-
-      - name: Package Windows Debug VST3 artifact
-        shell: pwsh
-        run: |
-          $candidates = @(
-            "build/DnBBassSynth_artefacts/Debug/VST3",
-            "build/DnBBassSynth_artefacts/VST3"
-          )
-          $artifactDir = $null
-          foreach ($candidate in $candidates) {
-            if (Test-Path $candidate) {
-              $artifactDir = $candidate
-              break
-            }
-          }
-          if (-not $artifactDir) {
-            throw "Expected VST3 artifact directory not found."
-          }
-          New-Item -ItemType Directory -Force -Path build/ci_bundle | Out-Null
-          $archive = "build/ci_bundle/DnBBassSynth_windows_debug_vst3.zip"
-          if (Test-Path $archive) {
-            Remove-Item $archive -Force
-          }
-          Compress-Archive -Path (Join-Path $artifactDir '*') -DestinationPath $archive
-
-      - name: Upload Windows Debug VST3 artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-windows-debug-vst3
-          path: build/ci_bundle/DnBBassSynth_windows_debug_vst3.zip
 
   bench_evidence_debug:
     name: bench-evidence-debug-non-blocking

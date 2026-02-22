@@ -35,7 +35,17 @@ jobs:
       - name: Install lint dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-tidy ninja-build
+          sudo apt-get install -y \
+            clang-tidy \
+            ninja-build \
+            libasound2-dev \
+            libx11-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libfreetype6-dev \
+            libglu1-mesa-dev \
+            libcurl4-openssl-dev
 
       - name: Init submodules
         run: bash tools/scripts/init_submodules.sh
