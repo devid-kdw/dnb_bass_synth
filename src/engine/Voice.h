@@ -70,15 +70,25 @@ public:
     currentParams = params;
     crossover.setFrequency(params.xoverFreq);
     charOsc.setFMRatio(params.fmRatio);
-    charOsc.setFMDepth(std::clamp(0.2f + (params.distAmount * 0.6f), 0.0f, 1.0f));
+    charOsc.setFMDepth(std::clamp(
+        0.2f + (params.distAmount * 0.6f) + params.fmDepth, 0.0f, 1.0f));
 
-    const float drive = 1.0f + (params.distAmount * 5.0f) + (params.ottDepth * 2.0f);
+    // Table drift translates to Phase Modulation to fulfill Macro-10 spec
+    charOsc.setPMDepth(params.tablePositionMod);
+
+    const float drive =
+        1.0f + (params.distAmount * 5.0f) + (params.ottDepth * 2.0f);
     saturator.setParameters(dsp::dist::Saturator::Type::SoftClip, drive);
 
+    // Wavefolder configured from Fold Bite macro mapping (1.0 = none, >1.0 =
+    // fold)
+    wavefolder.setFold(1.0f + params.foldDrive * 10.0f);
+
     const float safeCutoff = std::clamp(params.filterCutoff, 40.0f, 8000.0f);
-    const float resonance = std::clamp(0.15f + params.ottDepth * 0.6f, 0.0f, 0.95f);
-    svf.setParameters(dsp::filters::StateVariableFilter::Mode::LowPass, safeCutoff,
-                      resonance);
+    const float resonance =
+        std::clamp(0.15f + params.ottDepth * 0.6f, 0.0f, 0.95f);
+    svf.setParameters(dsp::filters::StateVariableFilter::Mode::LowPass,
+                      safeCutoff, resonance);
   }
 
   void processBlock(float *subOut, float *charOut, size_t numSamples) {
@@ -104,9 +114,13 @@ public:
     // Character path needs intermediate buffer
     size_t clampedSamples = std::min(numSamples, charBuffer.size());
 
+    // Run Character Oscillator
     charOsc.processBlock(charBuffer.data(), clampedSamples);
 
-    // Optionally route through SVF/Wavefolder here. For now, just saturator.
+    // Apply Wavefolder if Fold Bite is active
+    wavefolder.processBlock(charBuffer.data(), clampedSamples);
+
+    // Apply Saturator
     saturator.processBlock(charBuffer.data(), clampedSamples);
 
     for (size_t i = 0; i < clampedSamples; ++i) {
@@ -124,6 +138,17 @@ public:
       }
 
       float subS = subOsc.process();
+
+      // Sub Punch macro creates a transient strike at the start of the note
+      float subTransient = 1.0f;
+      if (currentParams.subTransientEnv > 0.0f && envVal < 0.3f &&
+          state == State::Attack) {
+        // Sharp decay transient simulation mapping
+        float punchEnvelope = (0.3f - envVal) * 3.33f;
+        subTransient =
+            1.0f + (punchEnvelope * currentParams.subTransientEnv * 0.5f);
+      }
+
       float charS = charBuffer[i];
 
       // Macro/style-controlled tone shaping on character path.
@@ -139,7 +164,7 @@ public:
       crossover.process(charS, dummyLow, charHigh);
       charS = charHigh;
 
-      subOut[i] = subS * envVal * currentVelocity;
+      subOut[i] = subS * envVal * subTransient * currentVelocity;
       charOut[i] = charS * envVal * currentVelocity;
     }
 
@@ -156,15 +181,17 @@ public:
 
 private:
   static domain::ResolvedParams defaultResolvedParams() {
-    return domain::ResolvedParams{
-        dnb::domain::limits::defaultAttackMs,
-        dnb::domain::limits::defaultReleaseMs,
-        dnb::domain::limits::subPhaseLockDeg,
-        dnb::domain::limits::defaultCrossoverHz,
-        dnb::domain::limits::defaultFMRatio,
-        dnb::domain::limits::defaultOttMix,
-        1000.0f,
-        0.0f};
+    return domain::ResolvedParams{dnb::domain::limits::defaultAttackMs,
+                                  dnb::domain::limits::defaultReleaseMs,
+                                  dnb::domain::limits::subPhaseLockDeg,
+                                  dnb::domain::limits::defaultCrossoverHz,
+                                  dnb::domain::limits::defaultFMRatio,
+                                  dnb::domain::limits::defaultOttMix,
+                                  1000.0f,
+                                  0.0f,
+                                  0.0f,
+                                  0.0f,
+                                  0.0f};
   }
 
   double sampleRate = 44100.0;

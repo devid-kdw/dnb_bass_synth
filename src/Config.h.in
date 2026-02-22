@@ -1,0 +1,7 @@
+#pragma once
+
+#include <string_view>
+
+namespace dnb::config {
+constexpr std::string_view pluginVersion = "@PROJECT_VERSION@";
+}

@@ -1,0 +1,713 @@
+
+DNB BASS VST3
+Tech Stack, Arhitektura & Folder Struktura
+Analiziran, dopunjen i finaliziran prijedlog
+Verzija 1.0  ·  Kompatibilno s: Research V2 · Developer Spec · DSP Supplement
+
+
+
+Ovaj dokument analizira predloženi tech stack i folder strukturu, donosi konkretne dopune i ispravke, te isporučuje finaliziranu verziju spremnu za postavljanje repozitorija. Svaka promjena naspram originalnog prijedloga eksplicitno je označena i obrazložena. Tamo gdje je original točan, zadržan je bez izmjena.
+
+1. Analiza i Ocjena Originalnog Prijedloga
+
+1.1 Što je dobro (zadržati bez izmjena)
+Sljedeće odluke iz originalnog prijedloga su ispravne i dovoljno argumentirane:
+
+	•	C++20 kao jedini runtime jezik — ispravan izbor, DSP ekosustav živi u C++
+	•	JUCE + CMake workflow — jedina razumna opcija za VST3 na macOS/Windows bez reimplementacije plugin-a od nule
+	•	Python samo za tooling (QA skripte, batch render, analiza) — ne u runtime-u
+	•	git submodules za dependencies (JUCE, Catch2, nlohmann/json) — reproducibilan build
+	•	Odvajanje dsp/ od domain/ sloja — ključna arhitektonska odluka za ovaj projekt
+	•	Catch2 za unit testove — lagan, header-friendly, dobar C++ test framework
+	•	spdlog samo u editor/init threadu, nikad u audio callbacku — RT-safe pristup
+	•	4 build konfiguracije (Debug, RelWithDebInfo, Release, ASan/UBSan) — profesionalan setup
+	•	CI od prvog dana — audio plugin build regresije su skupi kad ih se kasno uhvati
+
+1.2 Dopune i ispravke
+Sljedeći aspekti originalnog prijedloga zahtijevaju dopunu, preciziranje ili izmjenu:
+
+Stavka
+Original
+Finalna preporuka
+Half-band FIR za oversampling
+Nije naveden — samo 'oversampling'
+Dodati: HIIR lib (git submodule) ili vlastita polyphase FIR implementacija
+Eigen — opcionalno
+Predložen za 'napredniji math'
+Ukloniti iz projekta — Eigen je overkill za plugin, nema konkretne DnB primjene
+Benchmark folder
+bench/ naveden u strukturi
+Dodati: google/benchmark kao submodule umjesto custom bench/*.cpp bez frameworka
+CLAP target
+Samo 'V2/V3 opcija'
+Preporuka: dodati CLAP.h kao submodule od starta (single header) — zero cost dok se ne aktivira
+State serijalizacija
+JUCE ValueTree (implicitno)
+Eksplicitno: JUCE ValueTree + JSON migration layer (nlohmann) za preset versioning
+fmt biblioteka
+Opcija 'uz spdlog'
+Ukloniti kao posebnu dependency — spdlog 1.x već uključuje bundled fmt
+Folder: dsp/osc/
+SubOscillator + WavetableOsc + FmOperator
+Dodati: SubHarmonicGen.h (f/2 generator, DSP Supplement §7) i NoiseOsc.h (MVP spec)
+Folder: dsp/filters/
+TptSvf + ostali
+Dodati: FrequencyShifter.h (Bode transform, DSP Supplement §9) i CombFilter.h (V2 spec)
+Folder: dsp/safety/
+SubProtection, AntiClickRamp...
+Dodati: DenormalFlush.h (MXCSR flush-to-zero), ParameterSanityCheck.h (NaN/Inf guard)
+Folder: ui/
+components + layout + theme
+Dodati: ui/widgets/SpectrumAnalyzer.h i ScopeView.h — navedeni u DSP Supplement §10
+CI/CD
+macOS build naveden
+Dopuniti: Windows cross-build job (MSVC/MinGW) i artifact upload (ZIP s VST3 binarnim)
+
+!
+UKLONITI
+Eigen i fmt kao zasebne dependencies. Dodati: HIIR lib, google/benchmark, CLAP.h header — sve kao submoduli. Neto: manje dependencies, konkretnije koristi.
+
+2. Finalni Tech Stack
+
+2.1 Runtime Stack (plugin binary)
+
+Komponenta
+Teknologija
+Verzija
+Uloga
+Jezik
+C++20
+GCC 13+ / Clang 16+
+Jedini runtime jezik
+Plugin Framework
+JUCE 8.x
+Submodule, pin na tag
+VST3, AU, CLAP wrapper, GUI, State
+Build System
+CMake 3.24+
+System/brew install
+Cross-platform build, JUCE CMake workflow
+Plugin Target MVP
+VST3
+—
+Primary target
+Plugin Target V2
+AU (CoreAudio)
+JUCE built-in
+macOS Logic/GarageBand support
+Plugin Target V2
+CLAP
+CLAP.h single-header submodule
+Bitwig, Reaper — besplatan, moderni API
+Oversampling
+HIIR lib (polyphase FIR)
+Submodule (Alain Coulombe)
+Per-module OS: FM, Wavefold, WT
+Parameter State
+JUCE AudioProcessorValueTreeState
+JUCE built-in
+Param binding, automation, preset state
+Preset Serialization
+JUCE ValueTree + nlohmann/json
+Submodule
+State save/load + JSON migration layer
+
+2.2 Developer Tooling (van plugin binary)
+
+Alat
+Tehnologija
+Gdje se koristi
+Svrha
+Unit Tests
+Catch2 v3
+tests/unit/ i tests/dsp/
+Parametri, DSP algoritmi, safety clamps
+Benchmarks
+google/benchmark
+bench/
+CPU profiling, oversampling cost
+Logging (dev only)
+spdlog 1.x (uključuje fmt)
+Editor thread, init, preset load
+NIKAD u audio callbacku
+Static Analysis
+clang-tidy + clang-format
+CI pipeline + pre-commit hook
+Warnings-as-errors, RT-safety checks
+QA Skripte
+Python 3.11+
+tools/
+Batch render, FFT analiza, preset validation
+Spektralna analiza
+Python: numpy + scipy + matplotlib
+tools/preset_tools/
+Phase correlation, aliasing QA
+Dependency manager
+git submodules (extern/)
+Cijeli projekt
+Reproducibilni build, kontrola verzija
+
+2.3 IDE i Compiler Setup
+
+Platforma
+IDE / Toolchain
+Napomena
+macOS (primarno)
+CLion + CMake Tools ili VS Code + clangd LSP
+Xcode toolchain u pozadini, nije potreban Xcode IDE
+macOS (build)
+Apple Clang 15+ (Xcode Command Line Tools)
+brew install cmake llvm — za clang-tidy/format
+Windows (CI)
+MSVC 2022 Build Tools + CMake
+GitHub Actions runner, samo VST3 target provjera
+Linux (CI, opcionalno)
+GCC 13 + CMake
+Standalone build provjera, nije plugin host target
+
+2.4 Dependencies — Kompletna Lista
+
+Dependency
+Tip
+Faza
+Obavezno
+Razlog
+JUCE 8.x
+Framework
+MVP
+DA
+Plugin foundation
+VST3 SDK
+Submodule via JUCE
+MVP
+DA
+VST3 target
+nlohmann/json
+Single-header submodule
+MVP
+DA
+Preset migration/config
+Catch2 v3
+Submodule
+MVP
+DA
+Unit + DSP testovi
+HIIR lib
+Submodule
+MVP
+DA
+Polyphase FIR oversampling
+spdlog 1.x
+Submodule
+MVP
+DA
+Dev logging (uključuje fmt)
+CLAP.h
+Single-header submodule
+MVP (passive)
+Preporuka
+Spremi slot, zero cost dok se ne aktivira
+google/benchmark
+Submodule
+MVP/V2
+Preporuka
+CPU bench, OS cost profiling
+Eigen
+UKLONJEN
+—
+NE
+Nema konkretne DnB DSP primjene
+fmt (zasebno)
+UKLONJEN
+—
+NE
+spdlog ga već bundlira
+
+3. Arhitekturni Slojevi — Pojašnjenje
+
+Originalni prijedlog ispravno odvaja dsp/ od domain/ sloja. Ovaj dijagram razjašnjava granice i protok podataka između svih slojeva:
+
+┌─────────────────────────────────────────────────────────────────┐
+│                         HOST (DAW)                              │
+│             VST3 / AU / CLAP Plugin Interface                   │
+└─────────────────────────────────┬───────────────────────────────┘
+                                  │  MIDI + Audio Buffers
+                                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    app/  (JUCE wiring)                          │
+│  PluginProcessor ◄──── ParameterLayout ◄──── PluginState       │
+│  PluginEditor    ◄──── MacroBindings   ◄──── PresetManager     │
+└──────────────┬──────────────────────────────────────────────────┘
+               │  Sanitirani parametri + MIDI
+               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  domain/  (DnB Constraint Engine)               │
+│  ConstraintEngine ──► DnBLimits ──► StyleMode ──► MacroMap     │
+│                                                                 │
+│  Svi parametri PROLAZE kroz ovaj sloj. Output = sigurni DSP    │
+│  vrijednosti unutar žanrovski validnog prostora.               │
+└──────────────┬──────────────────────────────────────────────────┘
+               │  DSP-ready vrijednosti
+               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   engine/  (Voice Orchestration)                │
+│  SynthEngine ──► VoiceManager ──► Voice[] ──► NoteStack        │
+│                   Portamento, StyleModeMorph, ModMatrix         │
+└──────────────┬──────────────────────────────────────────────────┘
+               │  Per-voice render calls
+               ▼
+┌────────────────────────────────┐  ┌──────────────────────────────┐
+│      dsp/  SUB PATH            │  │      dsp/  CHARACTER PATH    │
+│  SubOscillator (phase=0)       │  │  WavetableOsc + FmOperator   │
+│  AntiClickRamp                 │  │  Wavefolder (4-8x OS)        │
+│  SubHarmonicGen (opt.)         │  │  DiodeClipper                │
+│  DCBlocker                     │  │  NotchBank / FormantBlock    │
+│                                │  │  TptSvf Filter               │
+│  [ZAŠTIĆEN — nema distorzije]  │  │  FrequencyShifter            │
+└──────────────┬─────────────────┘  └──────────────┬───────────────┘
+               │                                    │
+               └────────────┬───────────────────────┘
+                            │  Merged signal
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    dsp/safety/  (Final Bus)                     │
+│  CrossoverLR4 (120Hz mono) ──► DCBlocker ──► OTT ──► Limiter   │
+└─────────────────────────────────────────────────────────────────┘
+
+▲
+KRITIČNO
+domain/ sloj je jedini ulaz u dsp/. Nijedan UI element ili MIDI podatak ne smije zaobići ConstraintEngine. Ovo je arhitekturalna garancija DnB sigurnosti.
+
+4. Finalna Folder Struktura
+
+Struktura nastavlja original uz sve dopune navedene u §1.2. Svaka izmjena označena je inline komentarom.
+
+dnb-bass-synth/
+├─ cmake/
+│  ├─ CompilerWarnings.cmake
+│  ├─ Sanitizers.cmake
+│  ├─ JUCEConfig.cmake
+│  ├─ Versioning.cmake
+│  └─ ClangTidy.cmake          # [NOVO] clang-tidy integracija u CMake
+├─ extern/
+│  ├─ juce/                    # git submodule — pin na stable tag
+│  ├─ catch2/
+│  ├─ json/                    # nlohmann/json
+│  ├─ hiir/                    # [NOVO] polyphase FIR za oversampling
+│  ├─ spdlog/
+│  ├─ clap-cleveraudio/        # [NOVO] CLAP.h single-header, passive
+│  └─ benchmark/               # [NOVO] google/benchmark za bench/
+├─ docs/
+│  ├─ research/
+│  │  ├─ DNB_Bass_Synth_Research.pdf
+│  │  └─ references_notes.md
+│  ├─ spec/
+│  │  ├─ developer_spec.pdf
+│  │  ├─ supplemental_dsp_spec.docx
+│  │  ├─ techstack_architecture.docx  # ovaj dokument
+│  │  ├─ parameter_schema.md
+│  │  ├─ macro_matrix.md
+│  │  └─ style_modes.md
+│  ├─ qa/
+│  │  ├─ test_plan.md
+│  │  └─ acceptance_criteria.md
+│  ├─ adr/
+│  │  ├─ ADR-001-juce-vs-iPlug2.md      # [NOVO] Architecture Decision Records
+│  │  └─ ADR-002-hiir-vs-global-os.md   # [NOVO] obrazlozenje svake vazne odluke
+│  └─ changelog/
+├─ tools/
+│  ├─ preset_tools/
+│  │  ├─ validate_presets.py
+│  │  ├─ batch_render_tests.py
+│  │  ├─ analyze_spectra.py
+│  │  └─ check_mono_correlation.py  # [NOVO] provjera Phase Correlation < 120Hz
+│  ├─ schema_tools/
+│  │  └─ generate_param_docs.py
+│  └─ scripts/
+│     ├─ format.sh
+│     ├─ lint.sh
+│     ├─ init_submodules.sh     # [NOVO] one-shot submodule setup za nove devove
+│     └─ package_release.sh     # [NOVO] ZIP + hash za distribution
+├─ assets/
+│  ├─ ui/
+│  │  ├─ knobs/
+│  │  ├─ backgrounds/
+│  │  ├─ icons/
+│  │  └─ fonts/
+│  ├─ presets/
+│  │  ├─ factory/
+│  │  │  ├─ Jungle/
+│  │  │  ├─ Liquid/
+│  │  │  ├─ Tech/
+│  │  │  ├─ Neuro/
+│  │  │  ├─ JumpUp/
+│  │  │  └─ Dark/
+│  │  └─ test/
+│  └─ wavetables/              # curated WT set (.wav ili custom binarni)
+├─ config/
+│  ├─ parameter_defaults.json
+│  ├─ style_mode_limits.json
+│  └─ clang-tidy.yaml          # [NOVO] clang-tidy ruleset za cijeli projekt
+├─ src/
+│  ├─ app/
+│  │  ├─ PluginProcessor.h
+│  │  ├─ PluginProcessor.cpp
+│  │  ├─ PluginEditor.h
+│  │  ├─ PluginEditor.cpp
+│  │  ├─ PluginState.h
+│  │  ├─ PluginState.cpp
+│  │  ├─ ParameterLayout.h
+│  │  └─ ParameterLayout.cpp
+│  ├─ engine/
+│  │  ├─ SynthEngine.h
+│  │  ├─ SynthEngine.cpp
+│  │  ├─ RenderContext.h
+│  │  ├─ VoiceManager.h
+│  │  ├─ VoiceManager.cpp
+│  │  ├─ Voice.h
+│  │  ├─ Voice.cpp
+│  │  ├─ NoteStack.h
+│  │  └─ NoteStack.cpp
+│  ├─ dsp/
+│  │  ├─ core/
+│  │  │  ├─ AudioMath.h
+│  │  │  ├─ FastTanh.h
+│  │  │  ├─ DCBlocker.h
+│  │  │  ├─ Smoother.h
+│  │  │  ├─ Oversampler.h
+│  │  │  ├─ GainCompensation.h
+│  │  │  ├─ DenormalFlush.h    # [NOVO] MXCSR flush-to-zero + underflow guard
+│  │  │  └─ SanityCheck.h      # [NOVO] NaN/Inf detection u debug buildovima
+│  │  ├─ osc/
+│  │  │  ├─ SubOscillator.h
+│  │  │  ├─ SubOscillator.cpp
+│  │  │  ├─ WavetableOsc.h
+│  │  │  ├─ WavetableOsc.cpp
+│  │  │  ├─ FmOperator.h
+│  │  │  ├─ PhaseResetPolicy.h
+│  │  │  ├─ SubHarmonicGen.h   # [NOVO] f/2 sub-harmonik generator (DSP Supp. §7)
+│  │  │  └─ NoiseOsc.h         # [NOVO] noise layer (naveden u MVP specu)
+│  │  ├─ filters/
+│  │  │  ├─ TptSvf.h
+│  │  │  ├─ TptSvf.cpp
+│  │  │  ├─ LadderLikeLP.h
+│  │  │  ├─ NotchBank.h
+│  │  │  ├─ FormantBlock.h
+│  │  │  ├─ CrossoverLR4.h
+│  │  │  ├─ CombFilter.h       # [NOVO] Jump Up metalik efekt (V2 spec)
+│  │  │  └─ FrequencyShifter.h # [NOVO] Bode transform, Roller/Neuro (DSP Supp. §9)
+│  │  ├─ dist/
+│  │  │  ├─ Saturator.h
+│  │  │  ├─ Waveshaper.h
+│  │  │  ├─ Wavefolder.h
+│  │  │  ├─ DistStage.h
+│  │  │  ├─ MultiBandDist.h
+│  │  │  └─ AutoGain.h
+│  │  ├─ mod/
+│  │  │  ├─ EnvelopeADSR.h
+│  │  │  ├─ ModEnvelope.h
+│  │  │  ├─ LFO.h
+│  │  │  ├─ ModMatrix.h
+│  │  │  ├─ ModRouting.h
+│  │  │  └─ RateSync.h
+│  │  ├─ safety/
+│  │  │  ├─ SubProtection.h
+│  │  │  ├─ AntiClickRamp.h
+│  │  │  ├─ MonoLowManager.h
+│  │  │  ├─ HarshnessGuard.h
+│  │  │  ├─ OutputLimiterSoft.h
+│  │  │  ├─ ParameterClampRules.h
+│  │  │  └─ DenormalFlush.h    # [NOVO] flush-to-zero za saturacijske module
+│  │  └─ fx/
+│  │     ├─ StereoWidth.h
+│  │     ├─ TiltEQ.h
+│  │     ├─ VoiceEQ.h
+│  │     └─ CharacterBus.h
+│  ├─ domain/
+│  │  ├─ StyleMode.h
+│  │  ├─ StyleMode.cpp
+│  │  ├─ MacroMap.h
+│  │  ├─ MacroMap.cpp
+│  │  ├─ ParameterSpec.h
+│  │  ├─ ParameterSpec.cpp
+│  │  ├─ DefaultPatches.h
+│  │  ├─ DnBLimits.h
+│  │  ├─ DnBLimits.cpp
+│  │  ├─ ConstraintEngine.h
+│  │  └─ StyleModeMorph.h      # [NOVO] 50-100ms interpolacija pri Style Mode switch
+│  ├─ ui/
+│  │  ├─ components/
+│  │  │  ├─ MacroKnob.h
+│  │  │  ├─ MacroKnob.cpp
+│  │  │  ├─ SectionHeader.h
+│  │  │  ├─ ScopeMiniView.h
+│  │  │  ├─ XYPadOptional.h
+│  │  │  └─ ModeSelector.h
+│  │  ├─ widgets/
+│  │  │  ├─ SpectrumAnalyzer.h # [NOVO] Real-time FFT prikaz (DSP Supp. §10.1)
+│  │  │  └─ ScopeView.h        # [NOVO] Osciloskop: sub val vs character val
+│  │  ├─ layout/
+│  │  │  ├─ MainView.h
+│  │  │  ├─ MainView.cpp
+│  │  │  ├─ AdvancedView.h
+│  │  │  └─ AdvancedView.cpp
+│  │  ├─ theme/
+│  │  │  ├─ Colors.h
+│  │  │  ├─ Fonts.h
+│  │  │  └─ LookAndFeel.h
+│  │  └─ bindings/
+│  │     ├─ ParameterAttachmentHelpers.h
+│  │     └─ MacroBindings.cpp
+│  └─ preset/
+│     ├─ PresetManager.h
+│     ├─ PresetManager.cpp
+│     ├─ PresetSchema.h
+│     └─ PresetMigration.h
+├─ tests/
+│  ├─ unit/
+│  │  ├─ test_parameter_ranges.cpp
+│  │  ├─ test_macro_constraints.cpp
+│  │  ├─ test_smoothers.cpp
+│  │  ├─ test_mod_matrix.cpp
+│  │  └─ test_style_modes.cpp
+│  ├─ dsp/
+│  │  ├─ test_sub_phase_lock.cpp
+│  │  ├─ test_anti_click.cpp
+│  │  ├─ test_crossover_lr4.cpp
+│  │  ├─ test_dist_autogain.cpp
+│  │  ├─ test_dc_blocker.cpp
+│  │  ├─ test_oversampler.cpp  # [NOVO] HIIR oversampler aliasing check
+│  │  └─ test_denormal_flush.h # [NOVO] denormal guard verifikacija
+│  ├─ render/
+│  │  ├─ render_note_sweeps.cpp
+│  │  ├─ render_bpm_matrix.cpp
+│  │  └─ render_macro_stress.cpp
+│  └─ fixtures/
+│     ├─ midi/
+│     └─ presets/
+├─ bench/
+│  ├─ bench_voice_cpu.cpp
+│  ├─ bench_oversampling.cpp
+│  └─ bench_macro_updates.cpp
+└─ .github/
+   └─ workflows/
+      ├─ ci.yml                    # macOS + Windows build + tests
+      ├─ formatting.yml
+      └─ release.yml               # [NOVO] artifact ZIP na tag push
+
+5. CMakeLists.txt Skica
+
+Minimalna CMake struktura koja pokriva sve navedene dependencies i targets:
+
+cmake_minimum_required(VERSION 3.24)
+project(DnBBassSynth VERSION 1.0.0)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ── Submodules ───────────────────────────────────────────────────────
+add_subdirectory(extern/juce)
+add_subdirectory(extern/catch2)
+add_subdirectory(extern/spdlog)
+add_subdirectory(extern/benchmark)
+add_subdirectory(extern/hiir)     # header-only — samo include
+
+# ── Compiler warnings (Warnings-as-errors u CI) ──────────────────────
+include(cmake/CompilerWarnings.cmake)
+include(cmake/Sanitizers.cmake)
+
+# ── Plugin target ────────────────────────────────────────────────────
+juce_add_plugin(DnBBassSynth
+    PLUGIN_MANUFACTURER_CODE  Dnbs
+    PLUGIN_CODE               Dbs1
+    FORMATS                   VST3           # Dodati AU/CLAP u V2
+    PRODUCT_NAME              "DnB Bass Synth"
+    IS_SYNTH                  TRUE
+    NEEDS_MIDI_INPUT          TRUE
+)
+
+target_sources(DnBBassSynth PRIVATE
+    src/app/PluginProcessor.cpp
+    src/app/PluginEditor.cpp
+    # ... ostali .cpp fajlovi
+)
+
+target_include_directories(DnBBassSynth PRIVATE
+    src/
+    extern/hiir/
+    extern/json/single_include/
+)
+
+target_link_libraries(DnBBassSynth PRIVATE
+    juce::juce_audio_processors
+    juce::juce_audio_utils
+    juce::juce_dsp
+    juce::juce_gui_basics
+    spdlog::spdlog
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_warning_flags
+)
+
+# ── Tests ────────────────────────────────────────────────────────────
+enable_testing()
+add_subdirectory(tests)
+
+# ── Benchmarks ───────────────────────────────────────────────────────
+add_subdirectory(bench)
+
+6. CI/CD Pipeline — Finalna Konfiguracija
+
+Original navodi CI ali ne specificira jobs. Ovo je preporučena GitHub Actions konfiguracija:
+
+Job
+Trigger
+OS / Runner
+Koraci
+build-macos
+push + PR
+macos-14 (Apple M2)
+cmake configure → build → VST3 artifact ZIP
+build-windows
+push + PR
+windows-2022 (MSVC 2022)
+cmake configure → build → VST3 artifact ZIP
+unit-tests
+push + PR
+macos-14
+cmake test (Catch2) → JUnit XML report
+dsp-tests
+push + PR
+macos-14
+DSP render tests → WAV output → hash check
+formatting
+push + PR
+ubuntu-latest
+clang-format --dry-run → fail ako razlike
+lint (clang-tidy)
+PR only
+ubuntu-latest
+clang-tidy na svim source fajlovima
+release
+tag v*.*.*
+macos-14 + windows-2022
+Build Release config → ZIP + SHA256 → GitHub Release asset
+
+✓
+PREPORUKA
+DSP render tests trebaju čuvati referentne WAV uzorke u tests/fixtures/. Svaka promjena koja mijenja output generira fail — ovo uhvati zvučne regresije koje unit testovi propuste.
+
+7. Razvojne Faze — Tech Stack Perspektiva
+
+Koji dijelovi stack-a i strukture su aktivni u kojoj fazi razvoja:
+
+Faza
+Aktivan Stack
+Neaktivno (ali u repo-u)
+Cilj isporuke
+MVP
+JUCE + VST3 + CMake + Catch2 + HIIR + spdlog
+AU target, CLAP.h, google/benchmark, FrequencyShifter, CombFilter
+VST3 za macOS, 3 Style Mode-a, 10 makroa, factory preseti
+V2
++ AU target + CLAP aktiviran + google/benchmark + CombFilter + FrequencyShifter
+Sekvencirani LFO tracks, napredni oversampling po modulu
+VST3+AU+CLAP, Comb filter, Bode shifter, proširena mod matrica
+V3
+Cijeli stack aktivan + custom UI widgets (Spectrum, Scope)
+—
+Napredni OS per-module, phase correlation UI, preset cloud
+
+8. Najvažnije Arhitekturne Odluke — ADR Sažetak
+
+Preporučuje se docs/adr/ folder za Architecture Decision Records. Ovo su prve četiri odluke koje treba dokumentirati:
+
+ADR
+ADR-001
+JUCE 8 odabran naspram iPlug2 i DPF — JUCE pruža jedini kompletan paket (parameter state + GUI + preset + MIDI + multi-target) bez potrebe za zasebnom integracijom svake komponente. iPlug2 zahtijeva više ručnog wiring-a za state menadžment. DPF nema JUCE-ekvivalentni GUI sistem.
+ADR
+ADR-002
+Per-module oversampling (HIIR) naspram globalnog oversamplinga — Globalni OS povećava CPU load za sve module uključujući filtre koji ne generiraju aliasing. HIIR polyphase FIR primjenjuje OS samo na FM, Wavefold i WT — procijenjeni CPU gain: 30-50% naspram globalnog 4x OS.
+ADR
+ADR-003
+domain/ sloj kao jedini ulaz u dsp/ — Svaka alternativa (direktno čitanje JUCE parametara u DSP modulu) duplicira constraint logiku, povećava rizik od regresije i otežava testiranje žanrovskih pravila.
+ADR
+ADR-004
+CLAP.h dodan pasivno u MVP — Zero-cost uključivanje, ali aktivacija odgođena za V2. Sprječava kasniji refactor jer CLAP.h ne interferira s JUCE VST3 targetom.
+
+9. Quick-Start za Novi Developer
+
+Redosljed koraka za postavljanje dev okruženja na macOS od nule:
+
+# 1. Xcode Command Line Tools (jednom)
+xcode-select --install
+
+# 2. brew dependencies
+brew install cmake llvm ninja
+
+# 3. Clone repo s submodulima (one-shot)
+git clone --recurse-submodules https://github.com/yourorg/dnb-bass-synth.git
+cd dnb-bass-synth
+
+# Alternativa ako je repo već cloniran:
+bash tools/scripts/init_submodules.sh
+
+# 4. Configure + Build (Debug)
+cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug -G Ninja
+cmake --build build/debug --parallel
+
+# 5. Run unit tests
+cd build/debug && ctest --output-on-failure
+
+# 6. Build Release (za install u DAW)
+cmake -B build/release -DCMAKE_BUILD_TYPE=Release -G Ninja
+cmake --build build/release --parallel
+# VST3 output: build/release/DnBBassSynth_artefacts/VST3/
+
+# 7. Format check
+bash tools/scripts/format.sh --check
+
+ℹ
+init_submodules.sh
+Skripta mora pokriti: git submodule update --init --recursive. Ovo je najčešće zaboravljen korak koji uzrokuje 'missing header' build errore kod novih developera.
+
+10. Sažetak Promjena Naspram Originala
+
+
+Tip
+Originalni prijedlog
+Finalna verzija
+DODANO
+Oversampling bez specificiranog lib-a
+HIIR lib (extern/hiir) — polyphase FIR, submodule
+DODANO
+Bench bez frameworka
+google/benchmark (extern/benchmark)
+DODANO
+CLAP 'može dodati V2/V3'
+CLAP.h u extern/ odmah — pasivno, nulti trošak
+DODANO
+Folder struktura bez NOVO modula
+SubHarmonicGen, NoiseOsc, CombFilter, FrequencyShifter, StyleModeMorph, SpectrumAnalyzer, ScopeView
+DODANO
+Bez ADR folderu
+docs/adr/ s prvim 4 ADR dokumentima
+DODANO
+CI bez Windows i release jobs
+CI: macOS + Windows + formatting + lint + release job
+DODANO
+CMake bez skice
+Minimalna CMakeLists.txt skica s targets, deps, includes
+UKLONJEN
+Eigen kao opciona dependency
+Eigen uklonjen — nema DnB DSP primjene, nepotreban overhead
+UKLONJEN
+fmt kao zasebna dependency
+fmt uklonjen kao posebna dep — spdlog 1.x bundlira fmt
+POJAŠNJENO
+JUCE ValueTree (implicitno)
+Eksplicitno: JUCE ValueTree + nlohmann/json migration layer
+POJAŠNJENO
+domain/ odvojen od dsp/
+Dijagram toka podataka kroz sve slojeve + ADR-003 obrazloženje
+
+
+DNB Bass VST3 · Tech Stack & Arhitektura v1.0 · 2026

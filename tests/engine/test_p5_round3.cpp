@@ -1,7 +1,7 @@
 #include "../../src/domain/ConstraintEngine.h"
 #include "../../src/engine/SynthEngine.h"
-#include <catch2/catch_test_macros.hpp>
 #include <algorithm>
+#include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <vector>
 
@@ -66,7 +66,8 @@ float diffEnergy(const std::vector<float> &a, const std::vector<float> &b) {
 
 } // namespace
 
-TEST_CASE("P5 Round 3: style.mode impacts rendered audio", "[engine][p5][audio]") {
+TEST_CASE("P5 Round 3: style.mode impacts rendered audio",
+          "[engine][p5][audio]") {
   dnb::domain::RawInputParams tech;
   tech.activeStyle = dnb::domain::style::Mode::Tech;
   tech.macroFmMetal = 1.0f;
@@ -93,7 +94,8 @@ TEST_CASE("P5 Round 3: envelope APVTS params impact rendered audio",
   const auto fastAttackRender = renderWithRaw(fastAttack);
   const auto slowAttackRender = renderWithRaw(slowAttack);
 
-  REQUIRE(absEnergy(fastAttackRender, 0, 16) > absEnergy(slowAttackRender, 0, 16));
+  REQUIRE(absEnergy(fastAttackRender, 0, 16) >
+          absEnergy(slowAttackRender, 0, 16));
 
   dnb::domain::RawInputParams shortRelease;
   shortRelease.ampAttack = dnb::domain::limits::minAttackMs;
@@ -165,4 +167,93 @@ TEST_CASE("P5 Round 3: macro.liquid_depth impacts rendered audio",
   const auto wetRender = renderWithRaw(wet);
 
   REQUIRE(diffEnergy(dryRender, wetRender) > 0.01f);
+}
+
+TEST_CASE("P6.1 Macro-10: macro.sub_punch impacts rendered audio",
+          "[engine][p6][macro10][audio]") {
+  dnb::domain::RawInputParams off;
+  off.macroSubPunch = 0.0f;
+
+  auto on = off;
+  on.macroSubPunch = 1.0f;
+
+  const auto offRender = renderWithRaw(off);
+  const auto onRender = renderWithRaw(on);
+
+  REQUIRE(diffEnergy(offRender, onRender) > 0.01f);
+}
+
+TEST_CASE("P6.1 Macro-10: macro.fm_pressure impacts rendered audio",
+          "[engine][p6][macro10][audio]") {
+  dnb::domain::RawInputParams off;
+  off.activeStyle = dnb::domain::style::Mode::Dark; // Enable FM
+  off.macroFmMetal = 1.0f;                          // Enable Metal
+  off.macroFmPressure = 0.0f;
+
+  auto on = off;
+  on.macroFmPressure = 1.0f;
+
+  const auto offRender = renderWithRaw(off);
+  const auto onRender = renderWithRaw(on);
+
+  REQUIRE(diffEnergy(offRender, onRender) > 0.01f);
+}
+
+TEST_CASE("P6.1 Macro-10: macro.cutoff_motion impacts rendered audio",
+          "[engine][p6][macro10][audio]") {
+  dnb::domain::RawInputParams off;
+  off.macroNeuroFormant = 0.5f; // Gives base tone to filter
+  off.macroCutoffMotion = 0.0f;
+
+  auto on = off;
+  on.macroCutoffMotion = 1.0f;
+
+  const auto offRender = renderWithRaw(off);
+  const auto onRender = renderWithRaw(on);
+
+  REQUIRE(diffEnergy(offRender, onRender) > 0.01f);
+}
+
+TEST_CASE("P6.1 Macro-10: macro.fold_bite impacts rendered audio",
+          "[engine][p6][macro10][audio]") {
+  dnb::domain::RawInputParams off;
+  off.activeStyle = dnb::domain::style::Mode::Neuro; // Encourages fold
+  off.macroFoldBite = 0.0f;
+
+  auto on = off;
+  on.macroFoldBite = 1.0f;
+
+  const auto offRender = renderWithRaw(off);
+  const auto onRender = renderWithRaw(on);
+
+  REQUIRE(diffEnergy(offRender, onRender) > 0.01f);
+}
+
+TEST_CASE("P6.1 Macro-10: macro.table_drift impacts rendered audio",
+          "[engine][p6][macro10][audio]") {
+  dnb::domain::RawInputParams off;
+  off.macroTableDrift = 0.0f;
+
+  auto on = off;
+  on.macroTableDrift = 1.0f;
+
+  const auto offRender = renderWithRaw(off);
+  const auto onRender = renderWithRaw(on);
+
+  REQUIRE(diffEnergy(offRender, onRender) > 0.01f);
+}
+
+TEST_CASE("P6.1 Macro-10: macro.smash_glue impacts rendered audio",
+          "[engine][p6][macro10][audio]") {
+  dnb::domain::RawInputParams off;
+  off.macroNeuroFormant = 0.5f; // Add baseline OTT
+  off.macroSmashGlue = 0.0f;
+
+  auto on = off;
+  on.macroSmashGlue = 1.0f;
+
+  const auto offRender = renderWithRaw(off);
+  const auto onRender = renderWithRaw(on);
+
+  REQUIRE(diffEnergy(offRender, onRender) > 0.01f);
 }

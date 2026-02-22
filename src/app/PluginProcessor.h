@@ -57,6 +57,12 @@ private:
   std::atomic<float> *macroRollerDynParam = nullptr;
   std::atomic<float> *macroLiquidDepthParam = nullptr;
   std::atomic<float> *macroStyleMorphParam = nullptr;
+  std::atomic<float> *macroSubPunchParam = nullptr;
+  std::atomic<float> *macroFmPressureParam = nullptr;
+  std::atomic<float> *macroCutoffMotionParam = nullptr;
+  std::atomic<float> *macroFoldBiteParam = nullptr;
+  std::atomic<float> *macroTableDriftParam = nullptr;
+  std::atomic<float> *macroSmashGlueParam = nullptr;
   std::atomic<float> *styleModeParam = nullptr;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DnBBassSynthAudioProcessor)

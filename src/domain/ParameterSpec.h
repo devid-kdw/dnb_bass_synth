@@ -48,5 +48,17 @@ constexpr ParamDesc macroLiquidDepth{
     "macro.liquid_depth", "Liquid Depth", 0.0f, 1.0f, 0.0f, false};
 constexpr ParamDesc macroStyleMorph{
     "macro.style_morph", "Style Morph", 0.0f, 1.0f, 0.0f, false};
+constexpr ParamDesc macroSubPunch{
+    "macro.sub_punch", "Sub Punch", 0.0f, 1.0f, 0.0f, false};
+constexpr ParamDesc macroFmPressure{
+    "macro.fm_pressure", "FM Pressure", 0.0f, 1.0f, 0.0f, false};
+constexpr ParamDesc macroCutoffMotion{
+    "macro.cutoff_motion", "Cutoff Motion", 0.0f, 1.0f, 0.0f, false};
+constexpr ParamDesc macroFoldBite{
+    "macro.fold_bite", "Fold Bite", 0.0f, 1.0f, 0.0f, false};
+constexpr ParamDesc macroTableDrift{
+    "macro.table_drift", "Table Drift", 0.0f, 1.0f, 0.0f, false};
+constexpr ParamDesc macroSmashGlue{
+    "macro.smash_glue", "Smash Glue", 0.0f, 1.0f, 0.0f, false};
 
 } // namespace dnb::domain::parameters

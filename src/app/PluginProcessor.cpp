@@ -3,6 +3,7 @@
 
 #include "../domain/ParameterSpec.h"
 #include "../domain/StyleMode.h"
+#include "../preset/PresetManager.h"
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -26,6 +27,18 @@ DnBBassSynthAudioProcessor::DnBBassSynthAudioProcessor()
       apvts.getRawParameterValue(std::string(macroLiquidDepth.id));
   macroStyleMorphParam =
       apvts.getRawParameterValue(std::string(macroStyleMorph.id));
+  macroSubPunchParam =
+      apvts.getRawParameterValue(std::string(macroSubPunch.id));
+  macroFmPressureParam =
+      apvts.getRawParameterValue(std::string(macroFmPressure.id));
+  macroCutoffMotionParam =
+      apvts.getRawParameterValue(std::string(macroCutoffMotion.id));
+  macroFoldBiteParam =
+      apvts.getRawParameterValue(std::string(macroFoldBite.id));
+  macroTableDriftParam =
+      apvts.getRawParameterValue(std::string(macroTableDrift.id));
+  macroSmashGlueParam =
+      apvts.getRawParameterValue(std::string(macroSmashGlue.id));
 }
 
 DnBBassSynthAudioProcessor::~DnBBassSynthAudioProcessor() = default;
@@ -52,11 +65,11 @@ void DnBBassSynthAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   // 1. Parameter Mapping (RT-Safe, no allocations)
   dnb::domain::RawInputParams rawParams;
   if (styleModeParam != nullptr) {
-    const int styleIndex = std::clamp(static_cast<int>(styleModeParam->load()),
-                                      static_cast<int>(dnb::domain::style::Mode::Tech),
-                                      static_cast<int>(dnb::domain::style::Mode::Dark));
-    rawParams.activeStyle =
-        static_cast<dnb::domain::style::Mode>(styleIndex);
+    const int styleIndex =
+        std::clamp(static_cast<int>(styleModeParam->load()),
+                   static_cast<int>(dnb::domain::style::Mode::Tech),
+                   static_cast<int>(dnb::domain::style::Mode::Dark));
+    rawParams.activeStyle = static_cast<dnb::domain::style::Mode>(styleIndex);
   }
   if (attackParam != nullptr) {
     rawParams.ampAttack = attackParam->load();
@@ -81,6 +94,24 @@ void DnBBassSynthAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     if (std::abs(synthEngine.getStyleMorph() - currentTarget) > 0.001f) {
       synthEngine.startStyleMorph(currentTarget);
     }
+  }
+  if (macroSubPunchParam != nullptr) {
+    rawParams.macroSubPunch = macroSubPunchParam->load();
+  }
+  if (macroFmPressureParam != nullptr) {
+    rawParams.macroFmPressure = macroFmPressureParam->load();
+  }
+  if (macroCutoffMotionParam != nullptr) {
+    rawParams.macroCutoffMotion = macroCutoffMotionParam->load();
+  }
+  if (macroFoldBiteParam != nullptr) {
+    rawParams.macroFoldBite = macroFoldBiteParam->load();
+  }
+  if (macroTableDriftParam != nullptr) {
+    rawParams.macroTableDrift = macroTableDriftParam->load();
+  }
+  if (macroSmashGlueParam != nullptr) {
+    rawParams.macroSmashGlue = macroSmashGlueParam->load();
   }
 
   // Update style morph target based on some logic or leave as is if no style
@@ -154,9 +185,15 @@ const juce::String DnBBassSynthAudioProcessor::getProgramName(int) {
 
 void DnBBassSynthAudioProcessor::changeProgramName(int, const juce::String &) {}
 
-void DnBBassSynthAudioProcessor::getStateInformation(juce::MemoryBlock &) {}
+void DnBBassSynthAudioProcessor::getStateInformation(
+    juce::MemoryBlock &destData) {
+  dnb::preset::PresetManager::saveStateInformation(apvts, destData);
+}
 
-void DnBBassSynthAudioProcessor::setStateInformation(const void *, int) {}
+void DnBBassSynthAudioProcessor::setStateInformation(const void *data,
+                                                     int sizeInBytes) {
+  dnb::preset::PresetManager::loadStateInformation(data, sizeInBytes, apvts);
+}
 
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
   return new DnBBassSynthAudioProcessor();
@@ -213,6 +250,36 @@ DnBBassSynthAudioProcessor::createParameterLayout() {
   layout.add(std::make_unique<juce::AudioParameterFloat>(
       juce::ParameterID{juce::String(std::string(macroStyleMorph.id)), 1},
       juce::String(std::string(macroStyleMorph.name)),
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.0f));
+
+  layout.add(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{juce::String(std::string(macroSubPunch.id)), 1},
+      juce::String(std::string(macroSubPunch.name)),
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.0f));
+
+  layout.add(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{juce::String(std::string(macroFmPressure.id)), 1},
+      juce::String(std::string(macroFmPressure.name)),
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.0f));
+
+  layout.add(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{juce::String(std::string(macroCutoffMotion.id)), 1},
+      juce::String(std::string(macroCutoffMotion.name)),
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.0f));
+
+  layout.add(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{juce::String(std::string(macroFoldBite.id)), 1},
+      juce::String(std::string(macroFoldBite.name)),
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.0f));
+
+  layout.add(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{juce::String(std::string(macroTableDrift.id)), 1},
+      juce::String(std::string(macroTableDrift.name)),
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.0f));
+
+  layout.add(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{juce::String(std::string(macroSmashGlue.id)), 1},
+      juce::String(std::string(macroSmashGlue.name)),
       juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.0f));
 
   return layout;

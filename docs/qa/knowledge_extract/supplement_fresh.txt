@@ -1,0 +1,796 @@
+
+DNB BASS VST3
+Supplementarna DSP Specifikacija
+Nadopuna postojeće arhitektonske dokumentacije
+Verzija 1.0  ·  Dopuna uz V2 i Developer Sheet
+
+
+
+Svrha ovog dokumenta
+Postojeća dokumentacija (Research V2 i Developer Sheet) izvanredno pokriva taksonomiju podžanrova, parametarske granice, makro arhitekturu i sigurnosne DSP sustave. Ovaj supplementarni dokument ulazi u sljedeće nepokriivene zone: konkretna DSP matematika i pseudokod za implementaciju jezgrenih algoritama, detaljna specifikacija glasovne (voice) arhitekture i note-management sustava, napredne tehnike oversamplinga po modulu, strategije optimizacije CPU-a za real-time rad, MIDI i modulacijska matrica u punoj dubini, te UI/UX smjernice za restriktivni instrument.
+Svaka sekcija izravno referencira i proširuje odgovarajući dio prethodnih dokumenata. Tamo gdje postoji preklapanje, ovaj dokument pruža implementacijski detalj koji nedostaje.
+
+1. DSP Matematika: Jezgreni Algoritmi
+
+1.1 Sub Oscilator — Fazno Zaključavanje i Anti-Click
+Developer Sheet definira fazu kao hardkodiranu na 0° i zahtijeva anti-click rampu ispod 2 ms. Evo egzaktne implementacije:
+
+// Phase-locked sine oscilator s anti-click envelope
+struct SubOscillator {
+  double phase = 0.0;       // Uvijek 0 pri note-on
+  double phaseInc = 0.0;    // = freq / sampleRate
+  float  antiClickGain = 0.0f;
+  int    antiClickSamples = 0;  // ceil(0.002 * sampleRate)
+  int    antiClickPos = 0;
+
+  void noteOn(double freq, double sampleRate) {
+    phase = 0.0;  // HARD RESET — nikad random
+    phaseInc = freq / sampleRate;
+    antiClickPos = 0;
+    antiClickSamples = (int)ceil(0.002 * sampleRate); // 2ms ramp
+    antiClickGain = 0.0f;
+  }
+
+  float tick() {
+    float sample = (float)std::sin(phase * 2.0 * M_PI);
+    // Anti-click linear ramp (zamijeni s raised cosine za glatkiju krivulju)
+    if (antiClickPos < antiClickSamples) {
+      antiClickGain = (float)antiClickPos / antiClickSamples;
+      antiClickPos++;
+    } else { antiClickGain = 1.0f; }
+    phase += phaseInc;
+    if (phase >= 1.0) phase -= 1.0;  // Nema fmod() — skup je
+    return sample * antiClickGain;
+  }
+};
+
+DSP
+Raised cosine ramp (½ cos krivulja) daje 6dB manje klik artefakta od linearne rampe. Za 2ms pri 44100 Hz to je 89 uzoraka — zanemariv CPU trošak.
+
+1.2 Mid/Side Frekvencijska Skretnica (Crossover)
+Ekskluzivno mono ispod 120 Hz nije trivijalna operacija. Naive pristup (hard cutoff) uvodi faznu latenciju. Preporučena implementacija je LinkwitzRiley (LR4) crossover koji garantira sumiranje bez faznog gubitka:
+
+// Linkwitz-Riley 4. reda crossover (LR4)
+// Karakteristika: savršena rekonstrukcija pri sumiranju LP+HP
+class LR4Crossover {
+  // Dva kaskadirana Butterworth 2. reda (svaki je 12dB/oct)
+  Biquad lp1, lp2, hp1, hp2;
+
+  void setCrossover(float freq, float sampleRate) {
+    // Q = 0.7071 za Butterworth / Bessel aproksimaciju
+    float omega = 2.0f * M_PI * freq / sampleRate;
+    float q = 0.7071f;
+    lp1.setLowpass(omega, q);  lp2.setLowpass(omega, q);
+    hp1.setHighpass(omega, q); hp2.setHighpass(omega, q);
+  }
+
+  void process(float in, float& subOut, float& topOut) {
+    subOut = lp2.process(lp1.process(in));  // Sve ispod 120Hz → MONO
+    topOut = hp2.process(hp1.process(in));  // Sve iznad → stereo OK
+  }
+};
+
+// U render petlji: prisilno monofoniziranje sub signala
+float subMono = (subL + subR) * 0.5f;  // Nema width ispod crossovera
+
+1.3 FM Sinteza — Inharmonični Omjeri i Spektralni Profil
+Dokumentacija navodi konkretne inharmonične FM omjere (1.41, 7:10, 8:23) ali ne objašnjava zašto baš ti. Evo matematičkog temelja:
+
+U klasičnoj FM sintezi izlazni signal je: y(t) = A · sin(2π·fc·t + β·sin(2π·fm·t)), gdje je β indeks modulacije a omjer R = fm/fc određuje spektralni karakter.
+
+Omjer R = fm/fc
+Tip
+Spektralni rezultat
+DnB primjena
+1 : 1
+Cjelobrojan
+Harmonični — muzikalni, zvonast
+Nikad u DnB
+2 : 1
+Cjelobrojan
+Oktavni harmonici — čist bas
+Rijetko, samo Liquid
+1.41 (√2)
+Iracionalan
+Gust, atonalni srednji registar
+Neuro growl, Jump Up
+7 : 10 = 0.7
+Ne-cjelobrojan
+Brujanje + sub koherentnost
+Foghorn bas
+8 : 23 = 0.348
+Ne-cjelobrojan
+Režeći, distopijski karakter
+Darkstep, Techstep
+3.15
+Iracionalan
+Ekstreman metalik skree
+Agresivni Jump Up
+
+IMPL
+β (FM depth) treba biti modulabilan ali ograničen: iznad β=4.0 pri R=1.41 nastaje aliasing koji oversampling mora uhvatiti. Preporučeni max bez oversamplinga: β=2.5 pri 4x OS.
+
+1.4 Wavefolding — Matematika i Implementacijska Napomena
+Wavefolding signal koji prelazi prag zrcali natrag. Standardna jednadžba za jednu razinu foldinga:
+
+// Jednostavni wavefolder — jednadžba za fold pri threshold T
+// Ograničeno na jednu razinu (kao u analognim kolima)
+float wavefold(float x, float threshold) {
+  // Normalizacija na [-1, 1]
+  while (x >  threshold) x = 2.0f * threshold - x;
+  while (x < -threshold) x = -2.0f * threshold - x;
+  return x;
+}
+
+// VAŽNO: Implementacija s while petljom je ispravna ali SKUPA za CPU.
+// Za optimizaciju koristiti triangularnu wave distorziju:
+float wavefolderOptimized(float x, float T) {
+  x = x / (2.0f * T);   // Normalizacija
+  x = x - std::floor(x + 0.5f); // Triangularna funkcija
+  return 2.0f * T * std::fabs(2.0f * x) - T;  // Rekonstrukcija
+}
+
+WARN
+Wavefolding generira aliasing koji raste eksponencijalno s brojem foldova. Minimalni preporučeni oversampling za fold ≥ 2: 4x OS. Za 3+ razine foldinga: 8x OS obavezan.
+
+2. Voice Management Arhitektura
+
+2.1 Monofoni vs. Parafoni Mod — Tehnička Razlika
+Postojeći dokumenti navode 'monofoni/parafoni' ali ne specificiraju glasovnu arhitekturu. Ovo je kritično za DnB gdje glide i retrigger ponašanje direktno utječe na 'punch' osjet.
+
+Glasovni Mod
+Ponašanje
+Preporučena DnB Upotreba
+Mono (Legato)
+Jedna nota, nova nota nasljeđuje ADSR iz prethodne — bez retrig
+Liquid roller basovi, portamento
+Mono (Retrigger)
+Svaka nova nota restarira fazu i ADSR od nule
+Jump Up, Neuro — maksimalni punch
+Mono (Last Note)
+Drži posljednju pritisnutu notu pri overlapping inputu
+Brze sekvence u Techstep-u
+Parafoni 2V
+2 glasa — svaki s vlastitim oscilatorom ali dijeljen filter
+Unison Reese bez polyphony overhead-a
+Parafoni 4V
+4 glasa, zajednički Character Engine filter
+Kompleksni Neuro textureovi
+
+2.2 Legato Portamento — Implementacija
+Portamento (klizanje između nota) je esencijalno za Liquid i Ragga Jungle. Nije dovoljno linearno interpolirati pitch — rezultat zvuči plastično. Preporučena krivulja je eksponencijalna:
+
+// Eksponencijalni portamento
+// Bolje od linearnog jer prati prirodnu percepciju visine tona
+class Portamento {
+  double currentFreq = 440.0;
+  double targetFreq  = 440.0;
+  double coeff = 0.999; // Ovo se izračunava iz glide time
+
+  void setGlideTime(float ms, float sampleRate) {
+    // Vremenska konstanta: signal dostiže 63% targeta u glideTime
+    coeff = std::exp(-1.0 / (ms * 0.001 * sampleRate));
+  }
+
+  void setTarget(double freq) { targetFreq = freq; }
+
+  double tick() {
+    currentFreq += (targetFreq - currentFreq) * (1.0 - coeff);
+    return currentFreq;
+  }
+};
+
+// NAPOMENA: Glide treba bypasirati sub oscilatorsku fazu — ne resetirati je
+// pri legato note-on jer bi to ubilo rollerski flow.
+
+2.3 Voice Stealing Politika
+Čak i u monofonom modu, voice stealing mora biti deterministički (ne FIFO) jer random stealing uzrokuje nepredvidiv klik:
+
+	•	Uvijek steal: najstarija nota koja nije u attack fazi (jer attack prekida steal najglasnijeg tona)
+	•	Nikad steal: nota u prvih 5 ms (anti-click ramp je još aktivan — steal bi stvorio klik)
+	•	Prioritet: za Retrigger mod, sub oscilator dobiva vlastiti non-stealable slot — character engine može biti stolen
+
+3. Oversampling — Modularni Pristup
+
+3.1 Zašto Modularni (Per-Module) Oversampling
+Globalni oversampling (cijeli plugin radi na npr. 4x) je CPU skupo i nepotrebno. Aliasing nastaje samo u nelinearnim procesima. Modularni OS primjenjuje upsampling samo tamo gdje je neophodan:
+
+DSP Modul
+OS Potreban?
+Preporučen Faktor
+Razlog
+Sub Oscilator (Sine)
+NE
+1x (bez OS)
+Sinus nema aliasing bez distorzije
+Sub Oscilator (Tri)
+MINIMALNO
+2x
+Trokut ima blage harmonike
+Wavetable Oscilator
+DA
+4x
+Kompleksni valovi + morph
+FM Sinteza
+DA (uvijek)
+4x–8x
+FM aliasing eksponencijalan s β
+Diode Clipping
+DA
+4x
+Hard clipping = impulsni harmonici
+Wavefolding
+DA (uvijek)
+4x–8x
+Fold ≥ 2: 8x OS preporučen
+Tube Saturation
+MINIMALNO
+2x
+Soft saturation = blaži aliasing
+Filter (SVF/Moog)
+NE
+1x
+Linearna operacija
+OTT Kompresija
+NE
+1x
+Dinamika nema aliasing
+
+3.2 Polyphase FIR Anti-Aliasing Filter
+Za svaki blok koji zahtijeva OS, upsample i downsample filteri moraju biti polyphase FIR tipa. Eliptic IIR je CPU efikasniji ali uvodi grupnu kašnjenje — problematično za attack/punch osjet:
+
+// Pseudo-struktura za 4x OS blok
+class OversampledBlock {
+  // Polyphase FIR koeficijenti prekopirani iz npr. remez() dizajna
+  // Cutoff: 0.45 * originalSampleRate (Nyquist zaštita)
+  // Stopband: -96dB minimum (CD kvaliteta)
+  static constexpr int OS_FACTOR = 4;
+  PolyphaseFIR upsampleFilter;   // Interpolacijski FIR
+  PolyphaseFIR downsampleFilter; // Decimacijski FIR
+
+  float processNonlinear(float input) {
+    float upsampled[OS_FACTOR];
+    upsampleFilter.upsample(input, upsampled, OS_FACTOR);
+    for (int i = 0; i < OS_FACTOR; ++i)
+      upsampled[i] = nonlinearProcess(upsampled[i]); // wavefold/FM/clip
+    return downsampleFilter.downsample(upsampled, OS_FACTOR);
+  }
+};
+
+// NAPOMENA: FIR latencija = (filterLength - 1) / 2 uzoraka.
+// Kompenzirati s odgovarajućim latency reportanjem u VST3 procesoru.
+
+IMPL
+HIIR biblioteka (https://github.com/AlainCoulombe/hiir) pruža besplatne, visokokvalitetne polyphase half-band filtere optimizirane za SIMD. Preporučena za produkcijsku implementaciju.
+
+4. CPU Optimizacija i Real-Time Sigurnost
+
+4.1 Real-Time Thread Zabrane
+VST3 audio callback se poziva iz real-time threada. Sljedeće operacije su ZABRANJENE u audio petlji — uzrokuju nedeterminstički jitter koji uništava live performans:
+
+Zabranjeno u RT Threadu
+Simptom
+Rješenje
+malloc() / new / delete
+Kašnjenje OS page fault-a
+Pre-allocate sve pri inicijalizaciji
+Mutex lock (blokirajući)
+Priority inversion → klik
+Koristiti lock-free ringbuffer
+File I/O (čitanje preseta)
+Disk latencija → dropout
+Async loading u zasebnom threadu
+std::cout / printf logging
+Sporiji nego čitanje diska
+RT-safe logger s ringbuffer-om
+Virtualne funkcije u hot path-u
+Branch misprediction
+Template dispatch ili lookup table
+
+4.2 SIMD Optimizacija za Filtre
+Kritični putevi koji se izvršavaju svaki uzorak (filteri, oscilatori) trebaju koristiti SIMD instrukcije. Moderna implementacija koristi ARM NEON (Apple Silicon) ili SSE/AVX (x86):
+
+// Biquad filter — 4 paralelna glasa odjednom (SIMD SSE)
+// Umjesto serijskog procesiranja 4x, procesiramo sve 4 simultano
+#include <xmmintrin.h>  // SSE
+
+struct BiquadSSE {
+  __m128 b0, b1, b2, a1, a2;  // Koeficijenti za 4 filtera
+  __m128 z1, z2;               // Stanje za 4 filtera
+
+  __m128 process(__m128 x) {
+    __m128 y = _mm_add_ps(_mm_mul_ps(b0, x),  z1);
+    z1 = _mm_add_ps(_mm_sub_ps(_mm_mul_ps(b1, x), _mm_mul_ps(a1, y)), z2);
+    z2 = _mm_sub_ps(_mm_mul_ps(b2, x), _mm_mul_ps(a2, y));
+    return y;
+  }
+};
+// Rezultat: ~3.8x brže od serijalnog na modernim CPUima
+
+4.3 Parameter Smoothing — Denormali i Zipper Noise
+Developer Sheet navodi 5–30 ms parameter smoothing ali ne daje implementacijski detalj. Koristiti one-pole IIR low-pass za smoothing:
+
+// One-pole exponential smoother (standardni industrijski pristup)
+class ParamSmoother {
+  float current = 0.0f;
+  float coeff   = 0.999f;
+
+  void setSmoothTime(float ms, float sampleRate) {
+    coeff = std::exp(-1.0f / (ms * 0.001f * sampleRate));
+  }
+
+  float process(float target) {
+    current += (1.0f - coeff) * (target - current);
+    // Anti-denormal: flush to zero blizu nule
+    if (std::fabs(current) < 1e-15f) current = 0.0f;
+    return current;
+  }
+};
+
+// Preporučeni smoothing vremena po tipu parametra:
+// Filter Cutoff: 10-20ms  |  Volume/Gain: 5ms  |  FM Ratio: 20-30ms
+// LFO Rate (BPM sync): instant (bez smoothing, snap na vrijednost)
+
+5. Modulacijska Matrica — Kompletna Specifikacija
+
+5.1 Matrica Izvora i Destinacija
+Dokumenti definiraju makroe i LFO ali ne specificiraju punu modulacijsku matricu. Za DnB VST preporučuju se sljedeće kombinacije:
+
+Izvor Modulacije
+Destinacija
+Dubina (Depth)
+Napomena
+LFO1 (BPM sync)
+Character Filter Cutoff
+-100% → +100%
+Wobble/Roller efekt
+LFO1 (BPM sync)
+FM Depth (β)
+0% → +80%
+Animirani growl
+LFO2 (slobodni Hz)
+Wavetable Position
+0% → +60%
+Organski Neuro drift
+Amp Envelope
+Character Filter Cutoff
+0% → +100%
+Envelope-filter mod
+Amp Envelope
+Wavefold Threshold
+0% → +50%
+Attack-triggered fold
+MIDI Velocity
+Sub Oscilator Volume
+0% → +100%
+Dinamika Jungle-a
+MIDI Velocity
+FM Depth (β)
+0% → +40%
+Velocity-sensitive growl
+MIDI Mod Wheel
+Neuro-Formant Makro
+0% → +100%
+Live performance mod
+MIDI Pitchbend
+Portamento Target
+±2 semitona
+Hardlimit za DnB stil
+MIDI Aftertouch
+OTT Depth
+0% → +40%
+Ekspresivna kompresija
+
+5.2 LFO Specifikacija — Proširena
+Uz BPM-sync i slobodni Hz mod, LFO arhitektura treba podržati napredne oblike koji nisu prisutni u generičkim sintesajzerima:
+
+LFO Valni Oblik
+Karakteristika
+DnB Primjena
+Sinus
+Glatki, kontinuirani sweep
+Liquid Roller, Warm Wobble
+Trokut
+Linerani rast/pad
+Geometrijski wobble efekti
+Sawtooth (uzlazni)
+Brzi pad → spori rast
+Pumpajući Jump Up bas
+Sawtooth (silazni)
+Spori rast → brzi pad
+Gated Techstep pattern
+Kvadrat s duty cycle
+Varijabilna širina pulsa
+Step-gated Neurofunk
+Sample & Hold
+Nasumični step-koraci
+Glitchy Neuro teksture
+Smooth Random (S&H+LP)
+Mekan slučajni drift
+Organski underwater feel
+Custom (skicirljivi)
+Korisnik crta krivulju
+Napredni dizajn (V3 feature)
+
+5.3 MIDI Learn i Automatizacija
+Sve korisnički vidljive kontrole (makroi, LFO rate, Style Mode) trebaju biti automatizirane iz DAW-a. Preporuke za VST3 implementaciju:
+
+	•	MIDI Learn: Desni klik na bilo koji gumb → 'MIDI Learn' → bind na CC ili Note
+	•	Parameter ID konzistentnost: IDs moraju biti STABILNI između verzija — promjena ID-a briše DAW automatizaciju u projektima
+	•	Granularnost: Float parametri 32-bit, 0.0–1.0 normaliziran interni raspon koji se mapira na display vrijednosti
+	•	Atomic update: Parameter promjene se primjenjuju na granici audio buffer-a — ne u sredini buffera
+
+6. Napredna Filtar Topologija
+
+6.1 State Variable Filter (SVF) — Preporučena Implementacija
+Dokumenti preporučuju 12dB i 24dB filtre ali ne specificiraju topologiju. State Variable Filter (Chamberlin/TPT varijanta) je industriski standard za plugin razvoj jer je stabilan pri visokim rezonancijama i audio-rate modulaciji:
+
+// Topology-preserving Transform (TPT) SVF — Vadim Zavalishin dizajn
+// Izvor: 'The Art of VA Filter Design' (besplatno dostupno)
+struct TPT_SVF {
+  float ic1eq = 0, ic2eq = 0;  // Integrator stanje
+
+  // Koeficijenti — izračunaj jednom pri promjeni cutoff/Q
+  float g, k, a1, a2, a3;
+
+  void setParams(float cutoffHz, float Q, float sampleRate) {
+    g = std::tan(M_PI * cutoffHz / sampleRate);
+    k = 1.0f / Q;
+    a1 = 1.0f / (1.0f + g * (g + k));
+    a2 = g * a1;
+    a3 = g * a2;
+  }
+
+  // Vraća sve izlaze simultano (LP, BP, HP)
+  void process(float in, float& LP, float& BP, float& HP) {
+    float v3 = in - ic2eq;
+    float v1 = a1 * ic1eq + a2 * v3;
+    float v2 = ic2eq + a2 * ic1eq + a3 * v3;
+    ic1eq = 2.0f * v1 - ic1eq;
+    ic2eq = 2.0f * v2 - ic2eq;
+    LP = v2;  BP = v1;  HP = in - k * v1 - v2;
+  }
+};
+// Kaskadiranje 2x TPT_SVF daje LR4 (24dB/oct) bez faznih artefakata
+
+IMPL
+TPT SVF podržava audio-rate cutoff modulaciju bez nestabilnosti (za razliku od standardnih biquad filtera). Kritično za LFO → filter cutoff modulaciju u Roller basovima.
+
+6.2 Notch Filter Serijalizacija za Neuro-Formant
+Neuro-Formant makro upravlja s 2–3 notch filtera u seriji. Njihovi kutoff frekvenciji moraju pratiti 'formant putanje' koje oponašaju humani vokalni trakt:
+
+Formant Položaj
+Notch 1 (Hz)
+Notch 2 (Hz)
+Vokalni Karakter
+Closed (0%)
+300–500 Hz
+800–1200 Hz
+Zatvoren vokalni trakt ('mmm')
+Mid-Open (50%)
+700–900 Hz
+1800–2200 Hz
+Vokal 'o' ili 'u'
+Open (100%)
+1200–1500 Hz
+2800–3500 Hz
+Vokal 'a' ili 'e' — screech
+
+Napredna varijanta dodaje treći notch koji se kreće u obrnuto od drugog, imitirajući frikativne suglasnike ('sz', 'sh') — karakteristično za Pendulum/Chase&Status Neurofunk.
+
+7. Sub-Harmonik Generator — Nedokumentirana Tehnika
+
+7.1 Oktavni Sub-Harmonik za Povećanje Dubine
+Tekuća dokumentacija ne pokriva sub-harmonik generator koji mnogi top DnB producenti koriste za dodatnu dubinu bez pojačavanja temeljnog tona. Princip je generiranje signala na frekvenciji točno jedne oktave ispod note:
+
+// Sub-harmonik generator (1 oktava ispod, 50% phase offset)
+// Generira čisti sinus na f/2 — maximalna kompatibilnost s PA sustavima
+class SubHarmonicGenerator {
+  double subPhase = 0.0;
+  float level = 0.0f;  // Default: 0% (isključeno), max: 30%
+
+  void noteOn(double fundFreq, double sampleRate) {
+    subPhase = 0.0;  // Fazno zaključano kao i main sub
+    subPhaseInc = (fundFreq * 0.5) / sampleRate;  // f/2 = oktava niže
+  }
+
+  float tick() {
+    float sub = (float)std::sin(subPhase * 2.0 * M_PI) * level;
+    subPhase += subPhaseInc;
+    if (subPhase >= 1.0) subPhase -= 1.0;
+    return sub;
+  }
+};
+// LIMIT: level max 30% — više uzrokuje maskiranje kick drum-a ispod 40Hz
+// Preporučena frekvencijska zona za sub-harmonik: 20–45 Hz
+
+INFO
+Sub-harmonik na f/2 dodaje energiju ispod 50Hz što je čujno samo na klupskim PA sustavima i DJ monitorima. Korisna opcija za Jungle i Dark DnB stilove gdje sub mora biti 'fizički'. Treba biti skrivena kontrola, ne makro.
+
+8. DC Blocker i Saturation Chain — Redosljed Obrade
+
+8.1 Kritični Redosljed Signalnog Lanca
+Dokumenti opisuju DC Blocker ali ne specificiraju točan redosljed u signalnom lancu. Pogrešan redosljed uzrokuje DC offset koji prolazi u izlaz ili narušava saturacijske karakteristike:
+
+#
+Modul
+Razlog za Ovaj Položaj
+1
+Oscilatori (Sub + Character)
+Izvor signala
+2
+Wavefolder / FM Distorzija
+Nelinearna obrada PRIJE filtera — filter tada oblikuje distorziran spektar
+3
+DC Blocker (1. instance)
+Uklanja DC koji nastaje asimetričnom wavefold/clip distorzijom
+4
+Character Filter (notch/LP/HP)
+Filtrira nakon distorzije — autentični analogni model
+5
+Tube Saturation
+Zasićenje NAKON filtera — topli harmonici na oblikovanom spektru
+6
+DC Blocker (2. instance)
+Asimetrična tube sat opet može kreirati blagi DC offset
+7
+Mid/Side Crossover (120Hz)
+Prisilni mono za sub — MORA biti pred OTT-om
+8
+OTT Kompresija
+Višepojasna dinamika na finalnom signalu
+9
+Output Limiter (Soft Clip)
+Zaštitni stage — spriječava digital clipping na izlazu
+
+8.2 DC Blocker Implementacija
+
+// Jednostavni 1-polni DC blocker (visokopropusni IIR)
+// R = 0.995 daje cutoff ~22Hz pri 44100Hz — dovoljno za DC uklanjanje
+class DCBlocker {
+  float xPrev = 0.0f, yPrev = 0.0f;
+  float R = 0.995f;  // Povećaj za niže cutoff (sporije reagiranje)
+
+  float process(float x) {
+    float y = x - xPrev + R * yPrev;
+    xPrev = x;  yPrev = y;
+    return y;
+  }
+};
+// NAPOMENA: DC blocker uvodi minimalnu grupnu kašnjenje (< 1 uzorak)
+// ali ne uzrokuje percepcijsku promjenu u sub-basu.
+
+9. Preset i State Menadžment
+
+9.1 Preset Kategorije za DnB VST
+Preset sustav mora odražavati Style Mode arhitekturu. Preporučena hierarhija:
+
+Kategorija
+Primjeri Preset Naziva
+Aktivni Style Mode
+Jungle / 808
+808 Classic, Ragga Slide, Amen Foundation
+Tech (osnova)
+Liquid Roller
+Smooth Roller, Deep Liquid, Warmth Wave
+Liquid Depth aktiviran
+Reese (Classic)
+Techstep Reese, Dark Reese, Orbital Bass
+Neuro osnova
+Neurofunk
+Talking Head, Formant Machine, Neuro Verb
+Neuro-Formant aktivan
+Jump Up / Foghorn
+Foghorn 1.41, Screech Factory, Bou Style
+FM Metal aktivan
+Darkstep / Hard
+Abyss Sub, Hard Growl, Distopia Core
+Sve distorzije max
+Performance
+Live Roller, Wobble Machine, DJ Tool
+Roller Dynamics aktivan
+
+INFO
+Prvih 10 preseta u svakoj kategoriji trebaju biti 'initijalni' preseti koji demonstriraju Style Mode bez ekstremnih postavki. Lakše onboarding za nove korisnike bez degradiranja naprednog korisničkog iskustva.
+
+9.2 VST3 State Serijalizacija
+VST3 saveState() / loadState() pozivi trebaju serijalizirati sve parametre kao XML ili kompaktni binarni blob. Kritična pravila:
+
+	•	Verzija oznaka: Svaki state mora uključivati plugin verziju broj — za migraciju starih preseta
+	•	Unknown parametri: Nepoznate vrijednosti pri load-u trebaju biti tiho ignorirane (ne crash) — za forward kompatibilnost
+	•	Randomize funkcija: Treba biti implementirana ali ograničena na DnB-validni prostor — ne stvara generičke sintetske zvukove
+	•	Init preset: Hard-coded 'Init' preset vraća sve na default vrijednosti iz Developer Sheet tablice
+
+10. UI/UX Smjernice za Restriktivni Instrument
+
+10.1 Vizualni Jezik Ograničenja
+Ključni UX izazov: korisnik mora OSJEĆATI slobodu dok je zapravo zatvoren u DnB-validan prostor. Principi koji to postižu:
+
+	•	Skriveni ograničeni raspon — Kontrola izgleda kao da ide od 0–100%, ali interno mapira na npr. 10ms–300ms za release. Korisnik ne vidi limit.
+	•	Inkrementalni unlock — Osnovna sučelja (Performance mode) prikazuju 4 makroa. Advanced mode otkriva modulacijsku matricu. Expert mode prikazuje sve interne parametre.
+	•	Vizualni feedback distorzijskog karaktera — Osciloskop koji prikazuje sub val (uvijek čist sinus) i character val (bogat, distorziran) u real-time.
+	•	Spektralni analizator — Real-time FFT koji prikazuje sub-topline ispod 120Hz u drukčijoj boji od character spectral sadržaja.
+	•	Makro animacija — Kada se Neuro-Formant vrti, UI prikazuje kretanje notch filtera na spektralnom prikazu.
+
+10.2 Style Mode Tranzicija
+Prebacivanje između Style Modova (Tech/Neuro/Liquid/Jump Up) ne smije biti instant klik već glatka interpolacija svih parametara kroz 50–100 ms. Ovo sprječava audibilne artefakte pri live sviranju:
+
+// Style Mode morph — interpolacija između 2 seta parametara
+// duration: 50–100ms (korisnik može podesiti u postavkama)
+class StyleModeMorph {
+  float morphProgress = 1.0f;  // 0.0 = od, 1.0 = do
+  float morphRate = 0.0f;      // Izračunato iz duration
+  ParamSet fromParams, toParams;
+
+  void triggerMorph(ParamSet from, ParamSet to, float durationMs, float sampleRate) {
+    fromParams = from;  toParams = to;
+    morphProgress = 0.0f;
+    morphRate = 1.0f / (durationMs * 0.001f * sampleRate);
+  }
+
+  ParamSet tick() {
+    morphProgress = std::min(1.0f, morphProgress + morphRate);
+    // Koristiti smoothstep za S-krivulju (perceptivno prirodnija)
+    float t = morphProgress * morphProgress * (3.0f - 2.0f * morphProgress);
+    return lerp(fromParams, toParams, t);
+  }
+};
+
+10.3 Vizualni Identitet — Tehničke Preporuke
+Za DnB VST koji cilja tech/neuro/dark podžanrove, vizualni jezik treba biti:
+
+	•	Tamna tema obavezna — nikakav bijeli ili sivi background (light theme asocira na amaterske plugin-e)
+	•	Minimalni broj fontova — max 2 fonta; monospaced za parametre, sans-serif za labele
+	•	Boja upozorenja — Crvena/narančasta samo za DSP safety limitere (vizualni signal da je korisnik na rubu)
+	•	Animirani VU meteri za sub i character kanal — prikazuju energiju u real-time
+	•	Osciloskop view opcionalan ali preporučen za expert mode — vizualna povratna informacija o faznom zaključavanju
+
+11. Testiranje — Prošireni Scenariji
+
+11.1 Dodatni Testni Scenariji uz Postojeće
+Developer Sheet definira 5 testnih scenarija. Ovdje su dodatni slučajevi koji pokrivaju rubne uvjete specifične za DnB produkcijsko okruženje:
+
+#
+Test Naziv
+Metoda
+Prolaz Kriterij
+6
+Anti-Click Ramp Test
+Note-on pri attack=0ms, analiza prvog 5ms ADSR-a
+Nulta klipovanje u prvim 2ms
+7
+DC Offset Test
+Pokrenuti heavy asimetričnu saturaciju 30s, mjeriti DC
+DC < 0.1mV na izlazu
+8
+Aliasing Sweep Test
+FM β=3.0, sweep od C1 do C5, FFT analiza
+Aliasing > -80dB ispod Nyquist
+9
+Portamento Stability
+Brze glissando sekvence 8. note/sekundi pri 175BPM
+Nema dropoutova, glide prati notu
+10
+Mono Compatibility
+Svaki preset na stereo PA → mono suma, mjerenje RMS
+Gubitak RMS < 1dB u mono
+11
+Preset Load Stress
+Rapid switching 50 preseta u 10s, CPU meter
+CPU ne prelazi 80% single-core
+12
+MIDI Panic Test
+All-notes-off pri aktivnom LFO modulation
+Glatki fade bez klika
+13
+Long Note Test
+Drži notu 60s pri max resonance, provjera overflow
+Nema numerical overflow/NaN
+
+12. Referentni Komparativni Pregled Sličnih Plugina
+
+12.1 Što Ovaj Plugin Radi Drugačije
+Razumijevanje tržišnog konteksta pomaže clarificirati dizajnerske odluke. Evo komparativne analize s najbližim konkurentima:
+
+Značajka
+Serum 2
+Vital
+Bazz VST (fiktivni)
+DnB VST (naš)
+Žanrska fokusiranost
+Opći
+Opći
+Djelomični
+DnB ekskluzivno
+Sub-zaštita ugrađena
+NE
+NE
+Djelomično
+DA — hard constraint
+Mono sub (auto)
+Ručno
+Ručno
+Ručno
+Automatski ispod 120Hz
+Inharmonični FM presets
+NE
+NE
+NE
+DA — kurirani
+Parameter sloboda
+Neograničena
+Neograničena
+Djelomična
+Namjerno ograničena
+CPU (est. @ 175BPM)
+Visok
+Srednji
+Nizak
+Srednji (optimiziran)
+Krivulja učenja
+Strma
+Srednja
+Niska
+Najniža za DnB
+
+13. Sažetak Doprinosa i Prioritizacija
+
+Ovaj dokument nadopunjuje prethodnu dokumentaciju u sljedećim prioritetnim oblastima:
+
+#
+Doprinos
+Faza Razvoja
+Utjecaj
+1
+Konkretni pseudokod za Sub Osc, FM, Wavefold, DC Blocker
+MVP
+Kritičan
+2
+TPT SVF filter implementacija
+MVP
+Kritičan
+3
+RT-thread zabrane i lock-free arhitektura
+MVP
+Kritičan
+4
+Modularni per-module oversampling strategija
+MVP
+Visok
+5
+Kompletna modulacijska matrica
+MVP
+Visok
+6
+Voice stealing politika i legato portamento
+MVP
+Visok
+7
+Signalnog lanca redosljed (DC Blocker pozicioniranje)
+MVP
+Visok
+8
+Sub-harmonik generator tehnika
+V2
+Srednji
+9
+Prošireni LFO valni oblici (S&H, Smooth Random)
+V2
+Srednji
+10
+Style Mode morph interpolacija
+V2
+Srednji
+11
+UI/UX smjernice i vizualni identitet
+MVP (UI sprint)
+Srednji
+12
+Prošireni test scenariji (#6–13)
+Sve faze
+Visok (QA)
+
+Implementacijom svih gore navedenih doprinosa uz prethodnu arhitektonsku dokumentaciju, VST3 plugin postiže industrijsku razinu zvučne kvalitete i stabilnosti specifičnu za Drum and Bass žanr. Restriktivna filozofija dizajna ostaje netaknuta — svaki dodani detalj ovdje služi daljnjem učvršćivanju, a ne širenju, parametarskog prostora.
+
+
+DNB Bass VST3 · Supplementarna DSP Specifikacija v1.0 · 2026

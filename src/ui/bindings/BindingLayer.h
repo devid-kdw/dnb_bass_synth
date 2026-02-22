@@ -29,6 +29,18 @@ public:
                std::string(macroRollerDyn.id));
     bindSlider(macroPanel.getSlider(MacroPanel::LiquidDepth),
                std::string(macroLiquidDepth.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::SubPunch),
+               std::string(macroSubPunch.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::FmPressure),
+               std::string(macroFmPressure.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::CutoffMotion),
+               std::string(macroCutoffMotion.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::FoldBite),
+               std::string(macroFoldBite.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::TableDrift),
+               std::string(macroTableDrift.id));
+    bindSlider(macroPanel.getSlider(MacroPanel::SmashGlue),
+               std::string(macroSmashGlue.id));
 
     // 2. Bind Style Morph Slider
     bindSlider(styleMorph.getSlider(), std::string(macroStyleMorph.id));

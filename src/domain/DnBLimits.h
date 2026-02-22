@@ -40,6 +40,10 @@ constexpr float minOttMix = 0.0f;
 constexpr float maxOttMix = 0.60f;     // 60% limit
 constexpr float defaultOttMix = 0.15f; // 15%
 
+// 6. Filter Limits
+constexpr float minCutoffHz = 40.0f;
+constexpr float maxCutoffHz = 8000.0f;
+
 // Helper functions for clamping/validation
 inline float clampAttack(float value) {
   return std::clamp(value, minAttackMs, maxAttackMs);
@@ -55,6 +59,10 @@ inline float clampCrossover(float value) {
 
 inline float clampOtt(float value) {
   return std::clamp(value, minOttMix, maxOttMix);
+}
+
+inline float clampCutoff(float value) {
+  return std::clamp(value, minCutoffHz, maxCutoffHz);
 }
 
 // Snaps arbitrary value to the nearest allowed FM ratio

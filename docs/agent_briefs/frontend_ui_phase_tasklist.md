@@ -1,6 +1,6 @@
 # Frontend/UI Tasklist po Fazama
 
-Last updated: 2026-02-21  
+Last updated: 2026-02-22  
 Root: `/Users/grzzi/Desktop/dnb_bass_synth`
 
 ## 1. Obavezno prije početka
@@ -126,9 +126,35 @@ Output:
 DoD:
 1. Nema UI regressija kod load/save tokova.
 
-## 8. P7 - QA + Render + Bench (Frontend QA)
+## 8. P6.1 - Macro-10 Expansion + P7 Gate Closure (Frontend primary)
 Status: `Planned`  
 Depends on: `P6 Done`
+
+Taskovi:
+1. Uskladiti UI binding i surface za svih 10 makroa prema:
+   - `docs/spec/p1_schema_freeze.md` (zaključana 4)
+   - `docs/spec/macro_10_contract_proposal.md` (dodatnih 6)
+2. Očuvati macro-first UX:
+   - performance surface ostaje fokusirana na 4 primarna makroa
+   - dodatnih 6 makroa izložiti kroz advanced sloj bez scope creepa
+3. Zatvoriti frontend P6->P7 gate odstupanja:
+   - `G-P6P7-004` (frontend scope)
+4. Ako backend promijeni contract kroz P6.1:
+   - uskladiti bindinge isključivo na canonical ID-jeve
+   - bez runtime UI->DSP bypassa
+
+Output:
+1. Stabilan UI contract za svih 10 makroa.
+2. Frontend dio gate backloga zatvoren.
+
+DoD:
+1. Svaki UI control mapiran na postojeći APVTS param ID.
+2. Nema dead kontrola i nema domain bypassa.
+3. Predan P6.1 handoff s binding mapom i dokazima.
+
+## 9. P7 - QA + Render + Bench (Frontend QA)
+Status: `Planned`  
+Depends on: `P6.1 Done`
 
 Taskovi:
 1. Provesti UI QA scenarije:
@@ -145,7 +171,7 @@ DoD:
 1. UI quality gate prolazi za MVP scope.
 2. Predan handoff packet.
 
-## 9. P8 - CI/CD (Frontend support)
+## 10. P8 - CI/CD (Frontend support)
 Status: `Planned`  
 Primary owner: Orchestrator  
 Frontend role: support
@@ -157,7 +183,7 @@ Taskovi:
 DoD:
 1. Frontend checkovi reproducibilni kroz CI.
 
-## 10. Handoff packet format (obavezno po fazi)
+## 11. Handoff packet format (obavezno po fazi)
 Za svaku završenu fazu frontend agent mora predati:
 1. Phase ID i status prijedlog (`In Progress -> Review`).
 2. Točan popis promijenjenih datoteka.

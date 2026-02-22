@@ -22,18 +22,28 @@ struct RawInputParams {
   float macroFmMetal = 0.0f;
   float macroLiquidDepth = 0.0f;
   float macroRollerDynamics = 0.0f;
+  float macroSubPunch = 0.0f;
+  float macroFmPressure = 0.0f;
+  float macroCutoffMotion = 0.0f;
+  float macroFoldBite = 0.0f;
+  float macroTableDrift = 0.0f;
+  float macroSmashGlue = 0.0f;
 };
 
 // Represents the fully sanitized, DSP-ready parameters
 struct ResolvedParams {
-  float ampAttack;
-  float ampRelease;
-  float subPhase; // Guaranteed to be locked
-  float xoverFreq;
-  float fmRatio; // Guaranteed to be inharmonic safe
-  float ottDepth;
-  float filterCutoff;
-  float distAmount;
+  float ampAttack = 0.0f;
+  float ampRelease = 0.0f;
+  float subPhase = 0.0f;
+  float xoverFreq = 0.0f;
+  float fmRatio = 0.0f;
+  float fmDepth = 0.0f;
+  float ottDepth = 0.0f;
+  float filterCutoff = 0.0f;
+  float distAmount = 0.0f;
+  float foldDrive = 0.0f;
+  float subTransientEnv = 0.0f;
+  float tablePositionMod = 0.0f;
 };
 
 // The central authority for the domain boundaries.

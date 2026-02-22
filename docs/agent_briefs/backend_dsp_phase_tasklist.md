@@ -1,6 +1,6 @@
 # Backend/DSP Tasklist po Fazama
 
-Last updated: 2026-02-21  
+Last updated: 2026-02-22  
 Root: `/Users/grzzi/Desktop/dnb_bass_synth`
 
 ## 1. Obavezno prije početka
@@ -150,9 +150,44 @@ DoD:
 2. Migration scenariji pokriveni testovima.
 3. Predan handoff packet.
 
-## 8. P7 - QA + Render + Bench
+## 8. P6.1 - Macro-10 Expansion + P7 Gate Closure (Backend primary)
 Status: `Planned`  
 Depends on: `P6 Done`
+
+Taskovi:
+1. Implementirati 6 dodatnih makroa iz:
+   - `docs/spec/macro_10_contract_proposal.md`
+   - canonical ID-jevi:
+     - `macro.sub_punch`
+     - `macro.fm_pressure`
+     - `macro.cutoff_motion`
+     - `macro.fold_bite`
+     - `macro.table_drift`
+     - `macro.smash_glue`
+2. Uskladiti domain + app + runtime putanju za svih 10 makroa bez host-visible dead/no-op parametara.
+3. Dodati test pokrivenost za:
+   - domain mapping
+   - style clamp ponašanje (`Tech`, `Neuro`, `Dark`)
+   - runtime effect evidence
+4. Zatvoriti backend P6->P7 gate odstupanja:
+   - `G-P6P7-002`
+   - `G-P6P7-003`
+   - `G-P6P7-004` (backend scope)
+   - `G-P6P7-005` (backend scope: ADR update/supersede input)
+5. Predati backend P6.1 handoff s closure mapom i test evidence.
+
+Output:
+1. Aktivan Macro-10 backend contract i runtime implementacija.
+2. Backend dio gate backloga zatvoren dokazima.
+
+DoD:
+1. Svi novi macro parametri imaju stvarni runtime učinak.
+2. Nema kršenja `domain/ConstraintEngine` granice.
+3. Build/test verification prolazi i handoff je predan.
+
+## 9. P7 - QA + Render + Bench
+Status: `Planned`  
+Depends on: `P6.1 Done`
 
 Taskovi:
 1. Proširiti testove u:
@@ -177,7 +212,7 @@ DoD:
 2. Rezultati dokumentirani za orchestration review.
 3. Predan handoff packet.
 
-## 9. P8 - CI/CD (Backend support)
+## 10. P8 - CI/CD (Backend support)
 Status: `Planned`  
 Primary owner: Orchestrator  
 Backend role: support
@@ -189,7 +224,7 @@ Taskovi:
 DoD:
 1. CI može reproducirati backend quality gates.
 
-## 10. Handoff packet format (obavezno po fazi)
+## 11. Handoff packet format (obavezno po fazi)
 Za svaku završenu fazu backend agent mora predati:
 1. Phase ID i status prijedlog (`In Progress -> Review`).
 2. Točan popis promijenjenih datoteka.

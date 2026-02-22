@@ -5,6 +5,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Inject project version into source code
+configure_file(src/Config.h.in ${CMAKE_BINARY_DIR}/Config.h @ONLY)
+include_directories(${CMAKE_BINARY_DIR})
+
 option(DNB_ENABLE_PLUGIN_TARGET "Enable JUCE plugin target wiring when extern/juce is available." ON)
 option(DNB_BUILD_TESTS "Build Catch2-based test targets." ON)
 option(DNB_BUILD_BENCH "Build benchmark targets." ON)
@@ -38,6 +42,12 @@ if(EXISTS "${DNB_EXTERN_DIR}/hiir")
   set(DNB_HAS_HIIR ON)
 endif()
 
+if(EXISTS "${DNB_EXTERN_DIR}/json/CMakeLists.txt")
+  set(DNB_HAS_JSON ON)
+  set(JSON_BuildTests OFF CACHE INTERNAL "")
+  add_subdirectory("${DNB_EXTERN_DIR}/json" EXCLUDE_FROM_ALL)
+endif()
+
 if(DNB_ENABLE_PLUGIN_TARGET)
   if(DNB_HAS_JUCE)
     if(EXISTS "${CMAKE_SOURCE_DIR}/src/app/PluginProcessor.cpp"
@@ -57,6 +67,8 @@ if(DNB_ENABLE_PLUGIN_TARGET)
         src/app/PluginProcessor.cpp
         src/app/PluginEditor.cpp
         src/domain/ConstraintEngine.cpp
+        src/preset/PresetManager.cpp
+        src/preset/PresetMigration.cpp
         src/ui/theme/Theme.cpp
       )
 
@@ -82,6 +94,10 @@ if(DNB_ENABLE_PLUGIN_TARGET)
 
       if(DNB_HAS_SPDLOG)
         target_link_libraries(DnBBassSynth PRIVATE spdlog::spdlog)
+      endif()
+
+      if(DNB_HAS_JSON)
+        target_link_libraries(DnBBassSynth PRIVATE nlohmann_json::nlohmann_json)
       endif()
 
       target_compile_definitions(DnBBassSynth PRIVATE

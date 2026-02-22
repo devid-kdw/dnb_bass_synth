@@ -46,9 +46,8 @@ public:
     visualFeedback.setBounds(bounds.removeFromTop(120));
     bounds.removeFromTop(20);
 
-    // Canonical MVP macros (Neuro Formant, FM Metal, Roller Dynamics, Liquid
-    // Depth)
-    macroPanel.setBounds(bounds.removeFromTop(150));
+    // Canonical MVP macros + Advanced Macros (10 Total)
+    macroPanel.setBounds(bounds.removeFromTop(250));
   }
 
   void paint(juce::Graphics &g) override { g.fillAll(Theme::background); }

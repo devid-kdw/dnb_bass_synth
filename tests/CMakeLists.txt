@@ -96,3 +96,20 @@ add_executable(dsp_tests
 target_include_directories(dsp_tests PRIVATE ../src)
 target_link_libraries(dsp_tests PRIVATE Catch2::Catch2WithMain)
 catch_discover_tests(dsp_tests)
+
+if(TARGET juce::juce_audio_processors)
+add_executable(preset_tests
+    unit/test_preset_manager.cpp
+    ../src/preset/PresetManager.cpp
+    ../src/preset/PresetMigration.cpp
+)
+
+target_include_directories(preset_tests PRIVATE ../src)
+target_link_libraries(preset_tests PRIVATE 
+    Catch2::Catch2WithMain 
+    nlohmann_json::nlohmann_json
+    juce::juce_audio_processors
+    juce::juce_audio_utils
+    juce::juce_data_structures)
+catch_discover_tests(preset_tests)
+endif()

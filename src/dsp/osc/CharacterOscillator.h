@@ -41,6 +41,10 @@ public:
     fmDepth = std::clamp(newDepth, 0.0f, 1.0f);
   }
 
+  void setPMDepth(float newDepth) {
+    pmDepth = std::clamp(newDepth, 0.0f, 1.0f);
+  }
+
   void resetPhase() {
     currentPhase = 0.0f;
     fmPhase = 0.0f;
@@ -60,8 +64,12 @@ public:
       // Modulator (Sine)
       float modulator = std::sin(fmPhase);
 
+      // Add Table Drift Phase Modulation
+      float pmOffset =
+          std::sin(currentPhase * 0.5f) * pmDepth * static_cast<float>(M_PI);
+
       // Carrier
-      float output = std::sin(currentPhase +
+      float output = std::sin(currentPhase + pmOffset +
                               (modulator * fmDepth * static_cast<float>(M_PI)));
 
       // Tick phases
@@ -94,6 +102,9 @@ private:
   float fmDepth = 0.0f;
   float fmPhase = 0.0f;
   float fmIncrement = 0.0f;
+
+  // PM params (Table Drift)
+  float pmDepth = 0.0f;
 
   core::Oversampler os;
 };

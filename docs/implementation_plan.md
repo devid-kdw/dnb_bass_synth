@@ -104,13 +104,30 @@ DoD:
 - save/load deterministic across restart
 - migration tests pass for versioned states
 
+### Phase 6.1 - Macro-10 Contract Expansion + Gate Closure
+Scope:
+- implement full 10-macro contract using:
+  - locked 4 macros from `docs/spec/p1_schema_freeze.md`
+  - 6 additional macros from `docs/spec/macro_10_contract_proposal.md`
+- close P6->P7 deviations in:
+  - `docs/qa/p6_to_p7_gate_deviations.md`
+- resolve documentation/process drift (handoff integrity + plan status alignment)
+
+Depends on: Phase 6
+Blocks: Phase 7
+DoD:
+- no host-visible dead/no-op macro parameters
+- each new macro has domain mapping + runtime effect + test evidence
+- P6->P7 deviation backlog closed
+- final gate review note accepted
+
 ### Phase 7 - Tests, Render QA, Benchmarks
 Scope:
 - unit + dsp + render test suites (`tests/unit`, `tests/dsp`, `tests/render`)
 - benchmark baselines (`bench/`) for oversampling and voice CPU cost
 - include mono-correlation, aliasing, anti-click, long-note stability scenarios
 
-Depends on: Phase 6
+Depends on: Phase 6.1
 Blocks: CI gate completion
 DoD:
 - required tests pass in local debug/release profiles
@@ -178,6 +195,13 @@ Mitigation:
 - version-tagged state and migration layer
 - compatibility tests in CI
 
+### Macro Contract Drift
+Risk:
+- knowledge target (10 macros) diverges from active runtime contract
+Mitigation:
+- adopt `docs/spec/macro_10_contract_proposal.md`
+- execute closure backlog from `docs/qa/p6_to_p7_gate_deviations.md`
+
 ## 5. Definition of Done (Global)
 A phase is done only when:
 - implementation matches knowledge constraints
@@ -185,3 +209,9 @@ A phase is done only when:
 - required tests for phase pass
 - decisions and deviations are documented (ADR when architecture-impacting)
 - code is ready for downstream agent integration without hidden assumptions
+
+## 6. Current Gate Backlog (Must Close Before P7)
+Active backlog reference:
+- `docs/qa/p6_to_p7_gate_deviations.md`
+
+Implementation agents must treat this backlog as mandatory for P7 gate readiness.

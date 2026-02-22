@@ -1,6 +1,6 @@
 # DnB Bass Synth Master Implementation Plan
 
-Last updated: 2026-02-21  
+Last updated: 2026-02-22  
 Plan owner: Orchestrator agent  
 Update cadence: mandatory update after each completed phase handoff
 
@@ -29,9 +29,10 @@ If conflict exists, no implementation proceeds before resolution and ADR note.
 | P2 | DSP Core Primitives | Done | Backend/DSP | P1 | `src/dsp/core/*`, `src/dsp/safety/*` |
 | P3 | Osc/Filter/Nonlinear DSP | Done | Backend/DSP | P2 | `src/dsp/osc/*`, `src/dsp/filters/*`, `src/dsp/dist/*` |
 | P4 | Voice/Engine Orchestration | Done | Backend/DSP | P3 | `src/engine/*` deterministic voice path |
-| P5 | App Wiring + Macro UI | Planned | Frontend/UI + Backend | P1, P4 | `src/app/*`, `src/ui/*` bound to domain |
-| P6 | Preset/State/Migration | Planned | Backend/DSP | P5 | `src/preset/*`, state migration tests |
-| P7 | QA + Render + Bench | Planned | Backend/DSP + Orchestrator | P6 | `tests/*`, `bench/*`, QA reports |
+| P5 | App Wiring + Macro UI | Done | Frontend/UI + Backend | P1, P4 | `src/app/*`, `src/ui/*` bound to domain |
+| P6 | Preset/State/Migration | Done | Backend/DSP | P5 | `src/preset/*`, state migration tests |
+| P6.1 | Macro-10 Expansion + P7 Gate Closure | Done | Backend/DSP + Frontend/UI + Orchestrator | P6 | 6 new macros + gate backlog closure |
+| P7 | QA + Render + Bench | Planned | Backend/DSP + Orchestrator | P6.1 | `tests/*`, `bench/*`, QA reports |
 | P8 | CI/CD Hardening | Planned | Orchestrator | P7 | `.github/workflows/*`, CI gates |
 
 ## 4. Global Gate Conditions
@@ -169,6 +170,35 @@ Acceptance checks:
 1. Save/load deterministic.
 2. Migration behavior validated and documented.
 
+## P6.1 - Macro-10 Expansion + P7 Gate Closure
+Goal: align runtime macro contract with knowledge target and close all pre-P7 deviations.
+
+Agent tasks (Backend/DSP):
+1. Implement 6 additional macros from `docs/spec/macro_10_contract_proposal.md`.
+2. Wire new macro IDs through domain/engine/runtime path without dead/no-op exposure.
+3. Add tests for mapping + rendered effect + style-bound behavior.
+4. Fix P6 handoff evidence mismatches and version tagging consistency.
+
+Agent tasks (Frontend/UI):
+1. Expose/bind new macro controls according to macro contract proposal.
+2. Keep performance-first UX (4 primary) while adding advanced-surface access to remaining macros.
+3. Ensure no UI->DSP bypass and no stale binding IDs.
+
+Agent tasks (Orchestrator):
+1. Close process/documentation deviations from `docs/qa/p6_to_p7_gate_deviations.md`.
+2. Publish final acceptance note `docs/qa/p6_final_gate_review.md`.
+3. Update phase board/log statuses and next delegation queue.
+
+Expected outputs:
+1. Domain/app/ui/runtime support for all 10 macro controls
+2. Updated handoffs and gate closure note
+3. Updated master plan statuses/log
+
+Acceptance checks:
+1. No host-visible dead/no-op macro param.
+2. P6->P7 deviation backlog closed.
+3. Full build/test suite passes.
+
 ## P7 - QA + Render + Bench
 Goal: validate sonic correctness, constraints, and CPU behavior.
 
@@ -232,6 +262,9 @@ Required handoff packet from agent:
 | 2026-02-21 | Alignment (F-ALIGN-001/002/003) | Backend/DSP + TechStack/Repo + Orchestrator | Review -> Done | Final review accepted in `docs/qa/alignment_remediation_final_review.md`; submodule pinning, strict test dependency policy, and RT-safe oversampler path verified | Unblock P4 and start engine orchestration |
 | 2026-02-21 | P4 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Review | P4 handoff reviewed in `docs/qa/p4_review.md`; major RT/correctness findings identified (`F-P4-001`, `F-P4-002`) and one requirement gap (`F-P4-003`) | Backend submits P4 remediation patch, then re-review for P5 gate |
 | 2026-02-21 | P4 (Remediation) | Backend/DSP + Frontend/UI + Orchestrator | Review -> Done | Remediation accepted in `docs/qa/p4_remediation_final_review.md`; RT-safe NoteStack, voice truncation fix, morph surface, and engine regression tests validated (`21/21`) | Start P5 app wiring + macro UI integration |
+| 2026-02-22 | P5 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Done | App/APVTS wiring + macro UI integration completed and pushed in commit `21e1369` | Start P6 preset/state migration |
+| 2026-02-22 | P6 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Done | Preset/state migration layer accepted via `docs/qa/backend_phase_handoffs/P6_handoff_fix.md` and `docs/qa/frontend_phase_handoffs/P6_handoff_fix.md` | Execute P6.1 macro contract closure |
+| 2026-02-22 | P6.1 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Done | Final remediation accepted in `docs/qa/backend_phase_handoffs/P6_1_handoff_fix.md` and `docs/qa/frontend_phase_handoffs/P6_1_handoff_fix.md`; gate consolidated in `docs/qa/p6_final_gate_review.md` | Unblock P7 QA/render/bench |
 
 ## 8. Open Risks and Blockers
 | ID | Type | Description | Impact | Mitigation | Owner | Status |
@@ -250,8 +283,10 @@ Required handoff packet from agent:
 | R-012 | RT-Safety | `NoteStack` can trigger `std::vector` growth during `insert(begin, ...)` before cap enforcement | High | Refactor to no-allocation fixed-capacity behavior and add stress test | Backend/DSP | Closed |
 | R-013 | Audio Correctness | `Voice::processBlock` hard-truncates blocks above `1024` due fixed local buffer and zero-tail fill | High | Preallocate voice-owned buffer from `prepare(maxBlockSize)` and process full block | Backend/DSP | Closed |
 | R-014 | Contract Gap | P4 required style-mode morph handling not exposed in engine path yet | Medium | Implement engine morph state/progress surface or approve explicit defer note before P5 | Backend/DSP + Orchestrator | Closed |
+| R-015 | Contract Gap | P1 implemented 4 macros, but MVP knowledge docs require 10. Remaining 6 macros undocumented. | High | Temporary defer from ADR-005 superseded by P6.1 Macro-10 implementation and contract update. | Orchestrator | Closed (Superseded by P6.1) |
+| R-016 | Gate Readiness | P6->P7 deviations remain open across docs, handoff integrity, and macro-target closure | High | Closed through `docs/qa/p6_final_gate_review.md` with full closure map and verification evidence | Backend/DSP + Frontend/UI + Orchestrator | Closed |
 
 ## 9. Next Delegation Queue
-1. Start `P5 - App Wiring + Macro UI` with frozen engine/state surfaces from P4.
-2. Backend and frontend sync on APVTS/state exposure contract before runtime binding.
-3. Hold P5 gate on domain-bound binding checks and automation ID stability.
+1. Start `P7 - QA + Render + Bench`.
+2. Keep P7 outputs in `docs/qa/` with render/aliasing/CPU evidence.
+3. Prepare P8 CI hardening delegation after P7 closure.
