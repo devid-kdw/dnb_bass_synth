@@ -86,4 +86,26 @@ Effective from 2026-02-21 alignment review:
 - `docs/agent_briefs/frontend_ui_p1_fix_prompt.md` (P1 remediation prompt)
 - `docs/agent_briefs/frontend_ui_p2_fix_tasklist.md` (P2 conditional alignment tasklist)
 - `docs/agent_briefs/frontend_ui_p2_fix_prompt.md` (P2 conditional alignment prompt)
+- `docs/agent_briefs/frontend_ui_p7_design_integration_tasklist.md` (designer asset integration tasklist)
+- `docs/agent_briefs/frontend_ui_p7_design_integration_prompt.md` (designer asset integration prompt)
 - `docs/master_implementation_plan.md` (current phase status and global gates)
+
+## 11. Graphic Designer Integration Workflow (Mandatory)
+When graphic designer track is active, frontend must follow this exact sequence:
+1. Read `docs/spec/ui_graphic_asset_contract.md`.
+2. Read latest designer handoff in `docs/qa/design_phase_handoffs/`.
+3. Read designer mapping file:
+   - `assets/ui/designer/p7/manifests/p7_ui_control_asset_map.md`
+4. Integrate only assets listed in:
+   - `assets/ui/designer/p7/manifests/p7_ui_png_manifest.csv`
+5. Move/copy approved runtime assets to:
+   - `assets/ui/runtime/p7/`
+
+Frontend must not:
+1. invent missing asset states silently
+2. bind controls to assets outside manifest
+3. modify control semantics to fit visuals
+
+Frontend must report:
+1. exact `ui_control -> param_id -> asset_file` map in phase handoff
+2. any asset gaps/blockers back to orchestrator and designer

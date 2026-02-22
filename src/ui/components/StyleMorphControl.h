@@ -1,6 +1,9 @@
 #pragma once
 #include "../theme/Theme.h"
+#include "ImageMorphSlider.h"
+#include "UIAssets.h"
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <memory>
 
 namespace dnb_bass {
 namespace ui {
@@ -10,53 +13,40 @@ namespace ui {
 class StyleMorphControl : public juce::Component {
 public:
   StyleMorphControl() {
-    addAndMakeVisible(morphSlider);
-    morphSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-    morphSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    frameImg = juce::ImageCache::getFromMemory(
+        UIAssets::ui_panel_style_morph_frame_base_v001_png,
+        UIAssets::ui_panel_style_morph_frame_base_v001_pngSize);
 
-    addAndMakeVisible(techLabel);
-    techLabel.setText("Tech", juce::dontSendNotification);
-    techLabel.setColour(juce::Label::textColourId, Theme::accentTech);
-    techLabel.setJustificationType(juce::Justification::centredLeft);
+    morphSlider = std::make_unique<ImageMorphSlider>(
+        UIAssets::ui_style_morph_track_main_base_v001_png,
+        UIAssets::ui_style_morph_track_main_base_v001_pngSize,
+        UIAssets::ui_style_morph_thumb_main_base_v001_png,
+        UIAssets::ui_style_morph_thumb_main_base_v001_pngSize,
+        UIAssets::ui_style_morph_glow_main_active_v001_png,
+        UIAssets::ui_style_morph_glow_main_active_v001_pngSize);
 
-    addAndMakeVisible(neuroLabel);
-    neuroLabel.setText("Neuro", juce::dontSendNotification);
-    neuroLabel.setColour(juce::Label::textColourId, Theme::accentNeuro);
-    neuroLabel.setJustificationType(juce::Justification::centred);
-
-    addAndMakeVisible(darkLabel);
-    darkLabel.setText("Dark", juce::dontSendNotification);
-    darkLabel.setColour(juce::Label::textColourId, Theme::accentDark);
-    darkLabel.setJustificationType(juce::Justification::centredRight);
+    addAndMakeVisible(morphSlider.get());
   }
 
   void resized() override {
-    auto bounds = getLocalBounds().reduced(10);
-    auto labelBounds = bounds.removeFromBottom(20);
-
-    techLabel.setBounds(labelBounds.withWidth(50));
-    darkLabel.setBounds(
-        labelBounds.withTrimmedLeft(labelBounds.getWidth() - 50));
-    neuroLabel.setBounds(labelBounds);
-
-    morphSlider.setBounds(bounds.reduced(0, 5));
+    if (morphSlider != nullptr) {
+      // Frame has inherent padding, fit slider into logical track zone
+      morphSlider->setBounds(getLocalBounds().reduced(20, 25));
+    }
   }
 
   void paint(juce::Graphics &g) override {
-    g.setColour(Theme::panelBackground);
-    g.fillRoundedRectangle(getLocalBounds().toFloat(), 4.0f);
-
-    g.setColour(Theme::textSecondary.withAlpha(0.2f));
-    g.drawRoundedRectangle(getLocalBounds().toFloat(), 4.0f, 1.0f);
+    if (frameImg.isValid()) {
+      g.drawImage(frameImg, getLocalBounds().toFloat(),
+                  juce::RectanglePlacement::stretchToFit);
+    }
   }
 
-  juce::Slider &getSlider() { return morphSlider; }
+  juce::Slider &getSlider() { return *morphSlider; }
 
 private:
-  juce::Slider morphSlider;
-  juce::Label techLabel;
-  juce::Label neuroLabel;
-  juce::Label darkLabel;
+  juce::Image frameImg;
+  std::unique_ptr<ImageMorphSlider> morphSlider;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StyleMorphControl)
 };

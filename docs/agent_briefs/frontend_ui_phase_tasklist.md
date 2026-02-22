@@ -12,8 +12,13 @@ Root: `/Users/grzzi/Desktop/dnb_bass_synth`
    - `/Users/grzzi/Desktop/dnb_bass_synth/docs/project_rules.md`
    - `/Users/grzzi/Desktop/dnb_bass_synth/docs/master_implementation_plan.md`
    - `/Users/grzzi/Desktop/dnb_bass_synth/docs/agent_briefs/frontend_ui_agent_brief.md`
+   - `/Users/grzzi/Desktop/dnb_bass_synth/docs/spec/ui_graphic_asset_contract.md`
 2. Potvrdi da radiš isključivo unutar root foldera.
 3. Provjeri u `docs/master_implementation_plan.md` koja je aktivna ili prva `Planned` faza relevantna za frontend.
+4. Ako postoji dizajn handoff, učitaj:
+   - `docs/qa/design_phase_handoffs/P7_design_handoff.md`
+   - `assets/ui/designer/p7/manifests/p7_ui_png_manifest.csv`
+   - `assets/ui/designer/p7/manifests/p7_ui_control_asset_map.md`
 
 ## 2. P1 - Domain Constraint Core (Frontend support/review)
 Status: `Planned`  
@@ -161,15 +166,21 @@ Taskovi:
    - macro automation handling
    - style mode switch UX
    - control range guard behavior
-2. Dodati/održati UI binding testove gdje su dostupni.
-3. Dokumentirati UX edge-caseve i known limits.
+2. Implementirati stylized PNG komponente iz dizajn paketa:
+   - source: `assets/ui/designer/p7/exports/png/`
+   - runtime target: `assets/ui/runtime/p7/`
+3. Verificirati da svaki implementirani asset postoji u dizajn manifestu.
+4. Dodati/održati UI binding testove gdje su dostupni.
+5. Dokumentirati UX edge-caseve i known limits.
 
 Output:
 1. Frontend QA note s ključnim nalazima.
+2. `ui_control -> param_id -> asset_file` integration mapa.
 
 DoD:
 1. UI quality gate prolazi za MVP scope.
-2. Predan handoff packet.
+2. Nema missing/dead visual states za kontrole u scopeu.
+3. Predan handoff packet.
 
 ## 10. P8 - CI/CD (Frontend support)
 Status: `Planned`  

@@ -63,6 +63,72 @@ if(DNB_ENABLE_PLUGIN_TARGET)
 
       juce_generate_juce_header(DnBBassSynth)
 
+      juce_add_binary_data(DnBBassSynth_UI_Assets
+        HEADER_NAME "UIAssets.h"
+        NAMESPACE "UIAssets"
+        SOURCES
+          assets/ui/runtime/p7/ui_background_root_main_base_v001.png
+          assets/ui/runtime/p7/ui_background_root_noise_base_v001.png
+          assets/ui/runtime/p7/ui_panel_header_titleplate_base_v001.png
+          assets/ui/runtime/p7/ui_panel_macro_primary_frame_base_v001.png
+          assets/ui/runtime/p7/ui_panel_macro_advanced_frame_base_v001.png
+          assets/ui/runtime/p7/ui_panel_style_selector_frame_base_v001.png
+          assets/ui/runtime/p7/ui_panel_style_morph_frame_base_v001.png
+          assets/ui/runtime/p7/ui_panel_visual_feedback_frame_base_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_neuro_formant_idle_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_neuro_formant_hover_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_neuro_formant_active_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_fm_metal_idle_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_fm_metal_hover_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_fm_metal_active_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_roller_dynamics_idle_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_roller_dynamics_hover_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_roller_dynamics_active_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_liquid_depth_idle_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_liquid_depth_hover_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_liquid_depth_active_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_sub_punch_idle_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_sub_punch_hover_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_sub_punch_active_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_fm_pressure_idle_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_fm_pressure_hover_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_fm_pressure_active_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_cutoff_motion_idle_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_cutoff_motion_hover_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_cutoff_motion_active_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_fold_bite_idle_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_fold_bite_hover_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_fold_bite_active_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_table_drift_idle_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_table_drift_hover_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_table_drift_active_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_smash_glue_idle_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_smash_glue_hover_v001.png
+          assets/ui/runtime/p7/ui_macro_knob_smash_glue_active_v001.png
+          assets/ui/runtime/p7/ui_style_mode_tech_idle_v001.png
+          assets/ui/runtime/p7/ui_style_mode_tech_selected_v001.png
+          assets/ui/runtime/p7/ui_style_mode_tech_disabled_v001.png
+          assets/ui/runtime/p7/ui_style_mode_neuro_idle_v001.png
+          assets/ui/runtime/p7/ui_style_mode_neuro_selected_v001.png
+          assets/ui/runtime/p7/ui_style_mode_neuro_disabled_v001.png
+          assets/ui/runtime/p7/ui_style_mode_dark_idle_v001.png
+          assets/ui/runtime/p7/ui_style_mode_dark_selected_v001.png
+          assets/ui/runtime/p7/ui_style_mode_dark_disabled_v001.png
+          assets/ui/runtime/p7/ui_style_morph_track_main_base_v001.png
+          assets/ui/runtime/p7/ui_style_morph_thumb_main_base_v001.png
+          assets/ui/runtime/p7/ui_style_morph_glow_main_active_v001.png
+          assets/ui/runtime/p7/ui_visual_scope_grid_main_base_v001.png
+          assets/ui/runtime/p7/ui_visual_scope_wave_overlay_base_v001.png
+          assets/ui/runtime/p7/ui_visual_scope_spectrum_overlay_base_v001.png
+          assets/ui/runtime/p7/ui_visual_scope_frame_glow_active_v001.png
+          assets/ui/runtime/p7/ui_badge_macro_primary_base_v001.png
+          assets/ui/runtime/p7/ui_badge_macro_advanced_base_v001.png
+          assets/ui/runtime/p7/ui_icon_constraint_guard_on_v001.png
+          assets/ui/runtime/p7/ui_icon_mono_sub_lock_on_v001.png
+          assets/ui/runtime/p7/ui_icon_oversample_indicator_on_v001.png
+          assets/ui/runtime/p7/ui_icon_warning_general_on_v001.png
+      )
+
       target_sources(DnBBassSynth PRIVATE
         src/app/PluginProcessor.cpp
         src/app/PluginEditor.cpp
@@ -83,6 +149,7 @@ if(DNB_ENABLE_PLUGIN_TARGET)
       endif()
 
       target_link_libraries(DnBBassSynth PRIVATE
+        DnBBassSynth_UI_Assets
         juce::juce_audio_processors
         juce::juce_audio_utils
         juce::juce_dsp

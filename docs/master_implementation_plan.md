@@ -32,7 +32,7 @@ If conflict exists, no implementation proceeds before resolution and ADR note.
 | P5 | App Wiring + Macro UI | Done | Frontend/UI + Backend | P1, P4 | `src/app/*`, `src/ui/*` bound to domain |
 | P6 | Preset/State/Migration | Done | Backend/DSP | P5 | `src/preset/*`, state migration tests |
 | P6.1 | Macro-10 Expansion + P7 Gate Closure | Done | Backend/DSP + Frontend/UI + Orchestrator | P6 | 6 new macros + gate backlog closure |
-| P7 | QA + Render + Bench | Planned | Backend/DSP + Orchestrator | P6.1 | `tests/*`, `bench/*`, QA reports |
+| P7 | QA + Render + Bench + UI Skin Integration | Done | Backend/DSP + Frontend/UI + UI Graphic Designer + Orchestrator | P6.1 | `tests/*`, `bench/*`, QA reports, stylized UI asset pack |
 | P8 | CI/CD Hardening | Planned | Orchestrator | P7 | `.github/workflows/*`, CI gates |
 
 ## 4. Global Gate Conditions
@@ -199,23 +199,30 @@ Acceptance checks:
 2. P6->P7 deviation backlog closed.
 3. Full build/test suite passes.
 
-## P7 - QA + Render + Bench
-Goal: validate sonic correctness, constraints, and CPU behavior.
+## P7 - QA + Render + Bench + UI Skin Integration
+Goal: validate sonic correctness, constraints, CPU behavior, and integrate approved stylized UI asset pack.
 
 Agent tasks:
 1. Expand render regression tests and fixtures.
 2. Add benchmark baselines for oversampling and voice CPU cost.
 3. Run mandatory QA scenarios from developer and DSP docs.
+4. Integrate UI design package from `docs/spec/ui_graphic_asset_contract.md`.
+5. Validate frontend wiring against designer manifest and mapping files.
 
 Expected outputs:
 1. `tests/render/*`
 2. `tests/dsp/*`
 3. `bench/*`
 4. QA summary note in `docs/qa/`
+5. `assets/ui/designer/p7/exports/png/*`
+6. `assets/ui/designer/p7/manifests/p7_ui_png_manifest.csv`
+7. `assets/ui/runtime/p7/*`
+8. `docs/qa/design_phase_handoffs/P7_design_handoff.md`
 
 Acceptance checks:
 1. Required scenario matrix complete.
 2. Performance and aliasing constraints reported.
+3. UI asset package count, naming, and mapping contract pass.
 
 ## P8 - CI/CD Hardening
 Goal: automate quality gates and release artifact consistency.
@@ -265,12 +272,13 @@ Required handoff packet from agent:
 | 2026-02-22 | P5 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Done | App/APVTS wiring + macro UI integration completed and pushed in commit `21e1369` | Start P6 preset/state migration |
 | 2026-02-22 | P6 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Done | Preset/state migration layer accepted via `docs/qa/backend_phase_handoffs/P6_handoff_fix.md` and `docs/qa/frontend_phase_handoffs/P6_handoff_fix.md` | Execute P6.1 macro contract closure |
 | 2026-02-22 | P6.1 | Backend/DSP + Frontend/UI + Orchestrator | Planned -> Done | Final remediation accepted in `docs/qa/backend_phase_handoffs/P6_1_handoff_fix.md` and `docs/qa/frontend_phase_handoffs/P6_1_handoff_fix.md`; gate consolidated in `docs/qa/p6_final_gate_review.md` | Unblock P7 QA/render/bench |
+| 2026-02-22 | P7 | Backend/DSP + Frontend/UI + UI Graphic Designer + Orchestrator | Planned -> Done | P7 remediation findings closed in `docs/qa/p7_fix_review.md`; acceptance captured in `docs/qa/p7_final_gate_review.md` with build pass, `ctest` 45/45, benchmark evidence, and UI asset contract validation (manifest/export/runtime 60/60). | Start P8 CI/CD hardening kickoff |
 
 ## 8. Open Risks and Blockers
 | ID | Type | Description | Impact | Mitigation | Owner | Status |
 |---|---|---|---|---|---|---|
 | R-001 | Technical | Domain schema drift between backend and UI | High | Freeze contract at end of P1 before P5 full UI integration | Orchestrator | Mitigated |
-| R-002 | Performance | Oversampling CPU spikes in nonlinear stacks | High | Per-module OS policy + bench gates in P7 | Backend/DSP | Open |
+| R-002 | Performance | Oversampling CPU spikes in nonlinear stacks | High | Per-module OS policy + bench gates in P7, baseline captured in `docs/qa/p7_final_gate_review.md` | Backend/DSP | Mitigated |
 | R-003 | Quality | State migration regressions across versions | Medium | Version-tagged migration tests in P6 | Backend/DSP | Open |
 | R-004 | Spec Alignment | P1 style/FM domain set diverges from documented MVP curated constraints | Medium | Resolve in P1 rework before marking phase Done | Backend/DSP + Orchestrator | Closed |
 | R-005 | Contract | Frontend-backend mismatch in parameter IDs, macro set size, and style-set expectation | High | Create and sign off shared schema freeze artifact before P5 | Backend/DSP + Frontend/UI + Orchestrator | Closed |
@@ -287,6 +295,6 @@ Required handoff packet from agent:
 | R-016 | Gate Readiness | P6->P7 deviations remain open across docs, handoff integrity, and macro-target closure | High | Closed through `docs/qa/p6_final_gate_review.md` with full closure map and verification evidence | Backend/DSP + Frontend/UI + Orchestrator | Closed |
 
 ## 9. Next Delegation Queue
-1. Start `P7 - QA + Render + Bench`.
-2. Keep P7 outputs in `docs/qa/` with render/aliasing/CPU evidence.
-3. Prepare P8 CI hardening delegation after P7 closure.
+1. Start `P8 - CI/CD Hardening`.
+2. Implement and validate workflow matrix for configure/build/test on required targets.
+3. Add release artifact workflow with checksum generation and reproducibility checks.

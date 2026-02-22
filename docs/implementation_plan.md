@@ -126,12 +126,15 @@ Scope:
 - unit + dsp + render test suites (`tests/unit`, `tests/dsp`, `tests/render`)
 - benchmark baselines (`bench/`) for oversampling and voice CPU cost
 - include mono-correlation, aliasing, anti-click, long-note stability scenarios
+- integrate stylized UI PNG package from `docs/spec/ui_graphic_asset_contract.md`
 
 Depends on: Phase 6.1
 Blocks: CI gate completion
 DoD:
 - required tests pass in local debug/release profiles
 - key DSP regressions are covered by deterministic checks
+- frontend uses manifest-driven PNG assets with no missing control states
+- acceptance evidence published in `docs/qa/p7_final_gate_review.md`
 
 ### Phase 8 - CI/CD and Delivery Hardening
 Scope:
@@ -210,8 +213,10 @@ A phase is done only when:
 - decisions and deviations are documented (ADR when architecture-impacting)
 - code is ready for downstream agent integration without hidden assumptions
 
-## 6. Current Gate Backlog (Must Close Before P7)
-Active backlog reference:
-- `docs/qa/p6_to_p7_gate_deviations.md`
+## 6. Current Gate Backlog (Before P8)
+Status:
+- P6->P7 backlog is closed (`docs/qa/p6_to_p7_gate_deviations.md`, consolidated in `docs/qa/p6_final_gate_review.md`).
+- P7 remediation backlog is closed (`docs/qa/p7_fix_review.md`, accepted in `docs/qa/p7_final_gate_review.md`).
 
-Implementation agents must treat this backlog as mandatory for P7 gate readiness.
+Current kickoff blockers for P8:
+- none at plan level; proceed with CI/CD hardening scope from Phase 8.

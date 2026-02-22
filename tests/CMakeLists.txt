@@ -97,6 +97,16 @@ target_include_directories(dsp_tests PRIVATE ../src)
 target_link_libraries(dsp_tests PRIVATE Catch2::Catch2WithMain)
 catch_discover_tests(dsp_tests)
 
+add_executable(render_tests
+    render/test_aliasing.cpp
+    render/test_qa_scenarios.cpp
+    ../src/domain/ConstraintEngine.cpp
+)
+
+target_include_directories(render_tests PRIVATE ../src)
+target_link_libraries(render_tests PRIVATE Catch2::Catch2WithMain juce::juce_audio_processors juce::juce_dsp spdlog::spdlog)
+catch_discover_tests(render_tests)
+
 if(TARGET juce::juce_audio_processors)
 add_executable(preset_tests
     unit/test_preset_manager.cpp

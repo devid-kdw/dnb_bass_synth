@@ -1,5 +1,6 @@
 #pragma once
 #include "../theme/Theme.h"
+#include "UIAssets.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace dnb_bass {
@@ -11,35 +12,54 @@ namespace ui {
 class VisualFeedbackView : public juce::Component {
 public:
   VisualFeedbackView() {
-    addAndMakeVisible(infoLabel);
-    infoLabel.setText("[ DSP Visualization Area: FFT & Wavefold Notch Paths ]",
-                      juce::dontSendNotification);
-    infoLabel.setJustificationType(juce::Justification::centred);
-    infoLabel.setFont(juce::FontOptions(14.0f, juce::Font::italic));
-    infoLabel.setColour(juce::Label::textColourId, Theme::textSecondary);
+    gridImg = juce::ImageCache::getFromMemory(
+        UIAssets::ui_visual_scope_grid_main_base_v001_png,
+        UIAssets::ui_visual_scope_grid_main_base_v001_pngSize);
+
+    waveImg = juce::ImageCache::getFromMemory(
+        UIAssets::ui_visual_scope_wave_overlay_base_v001_png,
+        UIAssets::ui_visual_scope_wave_overlay_base_v001_pngSize);
+
+    spectrumImg = juce::ImageCache::getFromMemory(
+        UIAssets::ui_visual_scope_spectrum_overlay_base_v001_png,
+        UIAssets::ui_visual_scope_spectrum_overlay_base_v001_pngSize);
+
+    glowImg = juce::ImageCache::getFromMemory(
+        UIAssets::ui_visual_scope_frame_glow_active_v001_png,
+        UIAssets::ui_visual_scope_frame_glow_active_v001_pngSize);
   }
 
-  void resized() override { infoLabel.setBounds(getLocalBounds()); }
+  void resized() override { /* bounds are set by parent */ }
 
   void paint(juce::Graphics &g) override {
     auto bounds = getLocalBounds().toFloat();
 
-    // Dark background for scope area
-    g.setColour(juce::Colour(0xff0a0a0a));
-    g.fillRoundedRectangle(bounds, 6.0f);
+    if (gridImg.isValid()) {
+      g.drawImage(gridImg, bounds, juce::RectanglePlacement::stretchToFit);
+    }
 
-    // Mock sub wave (pure sine)
-    g.setColour(Theme::accentTech.withAlpha(0.6f));
-    g.drawRoundedRectangle(bounds.reduced(1.0f), 6.0f, 1.0f);
+    // Simulate active scope with mock spectrum/wave depending on UI state
+    // Since backend isn't feeding real FFT yet, we just paint the mock assets
+    if (spectrumImg.isValid()) {
+      g.setOpacity(0.5f);
+      g.drawImage(spectrumImg, bounds, juce::RectanglePlacement::stretchToFit);
+      g.setOpacity(1.0f);
+    }
 
-    // Draw a simulated static sine wave center line
-    g.setColour(juce::Colour(0xff333333));
-    g.drawLine(0, bounds.getHeight() / 2, bounds.getWidth(),
-               bounds.getHeight() / 2, 1.0f);
+    if (waveImg.isValid()) {
+      g.drawImage(waveImg, bounds, juce::RectanglePlacement::stretchToFit);
+    }
+
+    if (glowImg.isValid()) {
+      g.drawImage(glowImg, bounds, juce::RectanglePlacement::stretchToFit);
+    }
   }
 
 private:
-  juce::Label infoLabel;
+  juce::Image gridImg;
+  juce::Image waveImg;
+  juce::Image spectrumImg;
+  juce::Image glowImg;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VisualFeedbackView)
 };

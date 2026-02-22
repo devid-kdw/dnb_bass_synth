@@ -123,3 +123,11 @@ Backend/DSP-specific enforcement:
 - DSP modules must not introduce unconstrained/free behavior outside domain limits
 - strict RT-safe implementation
 - oversampling and safety chain follow DSP supplement + tech stack architecture
+
+## 14. Graphic Design Workflow Rules
+When UI Graphic Designer agent is active, these rules are mandatory:
+- Designer assets must follow `docs/spec/ui_graphic_asset_contract.md`.
+- Frontend agent can integrate only assets that exist in the design manifest.
+- No visual element may imply unsupported runtime behavior or bypass `domain/ConstraintEngine`.
+- Asset naming/versioning must stay deterministic to keep frontend wiring stable.
+- Any change to asset count or naming formula requires orchestrator approval and contract update.

@@ -23,6 +23,10 @@ OBAVEZNO PROČITAJ PRIJE RADA (točne putanje):
 6) /Users/grzzi/Desktop/dnb_bass_synth/docs/master_implementation_plan.md
 7) /Users/grzzi/Desktop/dnb_bass_synth/docs/agent_briefs/frontend_ui_agent_brief.md
 8) /Users/grzzi/Desktop/dnb_bass_synth/docs/agent_briefs/frontend_ui_phase_tasklist.md
+9) /Users/grzzi/Desktop/dnb_bass_synth/docs/spec/ui_graphic_asset_contract.md
+10) /Users/grzzi/Desktop/dnb_bass_synth/docs/qa/design_phase_handoffs/P7_design_handoff.md (ako postoji)
+11) /Users/grzzi/Desktop/dnb_bass_synth/assets/ui/designer/p7/manifests/p7_ui_png_manifest.csv (ako postoji)
+12) /Users/grzzi/Desktop/dnb_bass_synth/assets/ui/designer/p7/manifests/p7_ui_control_asset_map.md (ako postoji)
 
 NAČIN RADA:
 1) Nađi aktivnu ili prvu frontend-relevantnu fazu sa statusom "Planned" u docs/master_implementation_plan.md.
@@ -30,6 +34,8 @@ NAČIN RADA:
 3) Ako postoji nejasnoća/konflikt između dokumenata, stani i prijavi conflict + predloži ADR.
 4) Ne uvodi neodobrene dependencyje.
 5) Ne radi scope creep prema general-purpose synth UI-u.
+6) Ako postoji dizajn handoff/manifest, implementiraj isključivo assete iz tog paketa.
+7) Ne uvoditi vlastite ad-hoc UI assete koji nisu u dizajn manifestu bez odobrenja orkestratora.
 
 OBAVEZNI OUTPUT NA KRAJU FAZE:
 1) Predaj "handoff packet" s:
@@ -48,4 +54,5 @@ PRIORITETI:
 - Domain kao jedini gate prema DSP-u
 - Style mode behavior po knowledge pravilima
 - Stabilni parameter bindings i automation kompatibilnost
+- Dizajnerski asset workflow (manifest-driven implementacija)
 ```
