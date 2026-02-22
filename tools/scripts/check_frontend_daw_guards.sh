@@ -7,6 +7,31 @@ cd "${ROOT_DIR}"
 image_slider_file="src/ui/components/ImageSlider.h"
 visual_feedback_file="src/ui/components/VisualFeedbackView.h"
 
+have_rg=0
+if command -v rg >/dev/null 2>&1; then
+  have_rg=1
+fi
+
+search_fixed_q() {
+  local needle="$1"
+  shift
+  if [[ "${have_rg}" -eq 1 ]]; then
+    rg -Fq -- "${needle}" "$@"
+  else
+    grep -Fq -- "${needle}" "$@"
+  fi
+}
+
+search_regex_n() {
+  local pattern="$1"
+  shift
+  if [[ "${have_rg}" -eq 1 ]]; then
+    rg -n -- "${pattern}" "$@"
+  else
+    grep -RInE -- "${pattern}" "$@"
+  fi
+}
+
 if [[ ! -f "${image_slider_file}" ]]; then
   echo "[frontend-daw-guards] Missing ${image_slider_file}"
   exit 1
@@ -26,7 +51,7 @@ required_slider_patterns=(
   'fillEllipse(endpoint.x'
 )
 for pattern in "${required_slider_patterns[@]}"; do
-  if ! rg -Fq "${pattern}" "${image_slider_file}"; then
+  if ! search_fixed_q "${pattern}" "${image_slider_file}"; then
     echo "[frontend-daw-guards] Missing knob endpoint guard pattern: ${pattern}"
     exit 1
   fi
@@ -41,13 +66,13 @@ required_visual_patterns=(
   'juce::Path waveform;'
 )
 for pattern in "${required_visual_patterns[@]}"; do
-  if ! rg -Fq "${pattern}" "${visual_feedback_file}"; then
+  if ! search_fixed_q "${pattern}" "${visual_feedback_file}"; then
     echo "[frontend-daw-guards] Missing visual guard/runtime pattern: ${pattern}"
     exit 1
   fi
 done
 
-if rg -n 'ui_visual_scope_(wave_overlay|spectrum_overlay)_base_v001' "${visual_feedback_file}"; then
+if search_regex_n 'ui_visual_scope_(wave_overlay|spectrum_overlay)_base_v001' "${visual_feedback_file}"; then
   echo "[frontend-daw-guards] Static wave/spectrum overlay regression detected in VisualFeedbackView."
   exit 1
 fi

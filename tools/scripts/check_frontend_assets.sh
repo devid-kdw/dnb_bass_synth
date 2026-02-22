@@ -13,6 +13,41 @@ style_selector_file="src/ui/components/StyleSelector.h"
 style_morph_file="src/ui/components/StyleMorphControl.h"
 visual_feedback_file="src/ui/components/VisualFeedbackView.h"
 
+have_rg=0
+if command -v rg >/dev/null 2>&1; then
+  have_rg=1
+fi
+
+extract_matches() {
+  local pattern="$1"
+  shift
+  if [[ "${have_rg}" -eq 1 ]]; then
+    rg --no-filename -o -- "${pattern}" "$@" || true
+  else
+    grep -RhoE -- "${pattern}" "$@" || true
+  fi
+}
+
+search_fixed_q() {
+  local needle="$1"
+  shift
+  if [[ "${have_rg}" -eq 1 ]]; then
+    rg -Fq -- "${needle}" "$@"
+  else
+    grep -Fq -- "${needle}" "$@"
+  fi
+}
+
+search_regex_n() {
+  local pattern="$1"
+  shift
+  if [[ "${have_rg}" -eq 1 ]]; then
+    rg -n -- "${pattern}" "$@"
+  else
+    grep -RInE -- "${pattern}" "$@"
+  fi
+}
+
 if [[ ! -f "${manifest_csv}" ]]; then
   echo "[frontend-assets] Missing manifest CSV: ${manifest_csv}"
   exit 1
@@ -32,13 +67,13 @@ disk_runtime_assets="${tmp_dir}/disk_runtime_assets.txt"
 ui_used_assets="${tmp_dir}/ui_used_assets.txt"
 
 tail -n +2 "${manifest_csv}" | cut -d, -f1 | tr -d '\r' | sort -u > "${manifest_assets}"
-rg --no-filename -o 'assets/ui/runtime/p7/[a-z0-9_]+\.png' "${cmake_file}" \
+extract_matches 'assets/ui/runtime/p7/[a-z0-9_]+\.png' "${cmake_file}" \
   | sed 's#assets/ui/runtime/p7/##' \
   | sort -u > "${cmake_runtime_assets}"
 find "${runtime_dir}" -maxdepth 1 -type f -name '*.png' -print \
   | sed 's#.*/##' \
   | sort -u > "${disk_runtime_assets}"
-rg --no-filename -o 'UIAssets::[a-z0-9_]+_png' src/ui \
+extract_matches 'UIAssets::[a-z0-9_]+_png' src/ui \
   | sed 's/UIAssets:://' \
   | sed 's/_png$/.png/' \
   | sort -u > "${ui_used_assets}"
@@ -107,7 +142,7 @@ macro_states=("idle" "hover" "active")
 for macro_id in "${macro_ids[@]}"; do
   for macro_state in "${macro_states[@]}"; do
     token="ui_macro_knob_${macro_id}_${macro_state}_v001"
-    if ! rg -q "${token}" "${macro_panel_file}"; then
+    if ! search_fixed_q "${token}" "${macro_panel_file}"; then
       echo "[frontend-assets] Missing macro state token in MacroPanel: ${token}"
       exit 1
     fi
@@ -119,7 +154,7 @@ style_states=("idle" "selected" "disabled")
 for style_mode in "${style_modes[@]}"; do
   for style_state in "${style_states[@]}"; do
     token="ui_style_mode_${style_mode}_${style_state}_v001"
-    if ! rg -q "${token}" "${style_selector_file}"; then
+    if ! search_fixed_q "${token}" "${style_selector_file}"; then
       echo "[frontend-assets] Missing style state token in StyleSelector: ${token}"
       exit 1
     fi
@@ -132,7 +167,7 @@ morph_tokens=(
   "ui_style_morph_glow_main_active_v001"
 )
 for token in "${morph_tokens[@]}"; do
-  if ! rg -q "${token}" "${style_morph_file}"; then
+  if ! search_fixed_q "${token}" "${style_morph_file}"; then
     echo "[frontend-assets] Missing morph asset token in StyleMorphControl: ${token}"
     exit 1
   fi
@@ -144,13 +179,13 @@ visual_tokens=(
   "ui_visual_scope_frame_glow_active_v001"
 )
 for token in "${visual_tokens[@]}"; do
-  if ! rg -q "${token}" "${visual_feedback_file}"; then
+  if ! search_fixed_q "${token}" "${visual_feedback_file}"; then
     echo "[frontend-assets] Missing visual feedback token in VisualFeedbackView: ${token}"
     exit 1
   fi
 done
 
-if rg -n 'ui_visual_scope_(wave_overlay|spectrum_overlay)_base_v001' "${visual_feedback_file}"; then
+if search_regex_n 'ui_visual_scope_(wave_overlay|spectrum_overlay)_base_v001' "${visual_feedback_file}"; then
   echo "[frontend-assets] VisualFeedbackView reintroduced static wave/spectrum overlays."
   exit 1
 fi

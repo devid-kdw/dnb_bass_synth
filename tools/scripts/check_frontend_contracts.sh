@@ -8,6 +8,31 @@ binding_file="src/ui/bindings/BindingLayer.h"
 plugin_processor_file="src/app/PluginProcessor.cpp"
 plugin_editor_file="src/app/PluginEditor.cpp"
 
+have_rg=0
+if command -v rg >/dev/null 2>&1; then
+  have_rg=1
+fi
+
+search_fixed_q() {
+  local needle="$1"
+  shift
+  if [[ "${have_rg}" -eq 1 ]]; then
+    rg -Fq -- "${needle}" "$@"
+  else
+    grep -Fq -- "${needle}" "$@"
+  fi
+}
+
+search_regex_n() {
+  local pattern="$1"
+  shift
+  if [[ "${have_rg}" -eq 1 ]]; then
+    rg -n -- "${pattern}" "$@"
+  else
+    grep -RInE -- "${pattern}" "$@"
+  fi
+}
+
 if [[ ! -f "${binding_file}" ]]; then
   echo "[frontend-contract] Missing ${binding_file}"
   exit 1
@@ -30,18 +55,18 @@ required_binding_tokens=(
 )
 
 for token in "${required_binding_tokens[@]}"; do
-  if ! rg -q "${token}" "${binding_file}"; then
+  if ! search_fixed_q "${token}" "${binding_file}"; then
     echo "[frontend-contract] Missing canonical token in BindingLayer: ${token}"
     exit 1
   fi
 done
 
-if rg -n "\"(macro\\.[a-z0-9_]+|style\\.mode|env\\.amp\\.[a-z0-9_]+)\"" "${binding_file}"; then
+if search_regex_n "\"(macro\\.[a-z0-9_]+|style\\.mode|env\\.amp\\.[a-z0-9_]+)\"" "${binding_file}"; then
   echo "[frontend-contract] BindingLayer contains hardcoded raw param IDs (must use domain constants)."
   exit 1
 fi
 
-if ! rg -Fq 'juce::StringArray{"Tech", "Neuro", "Dark"}' "${plugin_processor_file}"; then
+if ! search_fixed_q 'juce::StringArray{"Tech", "Neuro", "Dark"}' "${plugin_processor_file}"; then
   echo "[frontend-contract] Canonical style contract (Tech/Neuro/Dark) missing in PluginProcessor parameter layout."
   exit 1
 fi
@@ -63,28 +88,28 @@ for path in "${legacy_scan_paths[@]}"; do
   fi
 done
 
-if rg -n "${legacy_pattern}" "${existing_paths[@]}"; then
+if [[ "${#existing_paths[@]}" -gt 0 ]] && search_regex_n "${legacy_pattern}" "${existing_paths[@]}"; then
   echo "[frontend-contract] Found forbidden legacy token style.morph in runtime/active contract paths."
   exit 1
 fi
 
 echo "[frontend-contract] checking UI -> DSP bypass guards"
-if rg -n '#include\\s+\".*\\/dsp\\/.*\"' src/ui "${plugin_editor_file}"; then
+if search_regex_n '#include\\s+\".*\\/dsp\\/.*\"' src/ui "${plugin_editor_file}"; then
   echo "[frontend-contract] UI/App editor includes DSP headers directly."
   exit 1
 fi
 
-if rg -n '\\bsynthEngine\\b|\\bconstraintEngine\\b' src/ui; then
+if search_regex_n '(^|[^A-Za-z0-9_])(synthEngine|constraintEngine)([^A-Za-z0-9_]|$)' src/ui; then
   echo "[frontend-contract] UI layer references engine/domain runtime internals directly."
   exit 1
 fi
 
-if ! rg -Fq 'make_unique<dnb_bass::ui::BindingLayer>' "${plugin_editor_file}"; then
+if ! search_fixed_q 'make_unique<dnb_bass::ui::BindingLayer>' "${plugin_editor_file}"; then
   echo "[frontend-contract] PluginEditor does not instantiate BindingLayer."
   exit 1
 fi
 
-if ! rg -Fq 'audioProcessor.getApvts()' "${plugin_editor_file}"; then
+if ! search_fixed_q 'audioProcessor.getApvts()' "${plugin_editor_file}"; then
   echo "[frontend-contract] PluginEditor does not wire UI through APVTS."
   exit 1
 fi
