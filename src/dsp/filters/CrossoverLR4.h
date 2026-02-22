@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <numbers>
 
 namespace dnb::dsp::filters {
 
@@ -27,7 +28,7 @@ public:
   void setFrequency(float freq) {
     // Simple direct-form biquad coeff generation for matched 2nd-order
     // butterworths
-    const float w0 = static_cast<float>(2.0 * M_PI * freq / sampleRate);
+    const float w0 = kTwoPi * freq / static_cast<float>(sampleRate);
     const float alpha = std::sin(w0) / (2.0f * 0.70710678f); // Q = 1/sqrt(2)
     const float cosw0 = std::cos(w0);
 
@@ -98,6 +99,9 @@ public:
   }
 
 private:
+  static constexpr float kPi = std::numbers::pi_v<float>;
+  static constexpr float kTwoPi = 2.0f * kPi;
+
   double sampleRate = 44100.0;
 
   float c_b0_lp = 0.f, c_b1_lp = 0.f, c_b2_lp = 0.f, c_a1_lp = 0.f, c_a2_lp = 0.f;

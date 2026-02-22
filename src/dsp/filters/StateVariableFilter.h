@@ -3,6 +3,7 @@
 #include "../core/DenormalFlush.h"
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 
 namespace dnb::dsp::filters {
 
@@ -34,7 +35,7 @@ public:
       cutoffFreq = 20.0f;
 
     // Filter formulas (linear TP-SVF mapping)
-    float g = std::tan(static_cast<float>(M_PI) * cutoffFreq / static_cast<float>(sampleRate));
+    float g = std::tan(kPi * cutoffFreq / static_cast<float>(sampleRate));
     float R = std::max(0.0f, 1.0f - resonance);
 
     a1 = 1.0f / (1.0f + g * (g + 2.0f * R));
@@ -73,6 +74,8 @@ public:
   }
 
 private:
+  static constexpr float kPi = std::numbers::pi_v<float>;
+
   double sampleRate = 44100.0;
   Mode mode = Mode::LowPass;
 

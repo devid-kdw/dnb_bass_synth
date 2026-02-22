@@ -3,6 +3,7 @@
 #include "../core/Oversampler.h"
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 
 namespace dnb::dsp::osc {
 
@@ -32,8 +33,8 @@ public:
   void updateIncrements() {
     // OS rate = sampleRate * 4
     double osRate = sampleRate * 4.0;
-    phaseIncrement = static_cast<float>(frequency * (2.0 * M_PI / osRate));
-    fmIncrement = static_cast<float>((frequency * fmRatio) * (2.0 * M_PI / osRate));
+    phaseIncrement = frequency * (kTwoPi / static_cast<float>(osRate));
+    fmIncrement = (frequency * fmRatio) * (kTwoPi / static_cast<float>(osRate));
   }
 
   void setFMDepth(float newDepth) {
@@ -64,21 +65,20 @@ public:
       float modulator = std::sin(fmPhase);
 
       // Add Table Drift Phase Modulation
-      float pmOffset = std::sin(currentPhase * 0.5f) * pmDepth * static_cast<float>(M_PI);
+      float pmOffset = std::sin(currentPhase * 0.5f) * pmDepth * kPi;
 
       // Carrier
-      float output =
-          std::sin(currentPhase + pmOffset + (modulator * fmDepth * static_cast<float>(M_PI)));
+      float output = std::sin(currentPhase + pmOffset + (modulator * fmDepth * kPi));
 
       // Tick phases
       currentPhase += phaseIncrement;
-      if (currentPhase >= static_cast<float>(2.0 * M_PI)) {
-        currentPhase -= static_cast<float>(2.0 * M_PI);
+      if (currentPhase >= kTwoPi) {
+        currentPhase -= kTwoPi;
       }
 
       fmPhase += fmIncrement;
-      if (fmPhase >= static_cast<float>(2.0 * M_PI)) {
-        fmPhase -= static_cast<float>(2.0 * M_PI);
+      if (fmPhase >= kTwoPi) {
+        fmPhase -= kTwoPi;
       }
 
       oversampled[i] = output;
@@ -88,6 +88,9 @@ public:
   }
 
 private:
+  static constexpr float kPi = std::numbers::pi_v<float>;
+  static constexpr float kTwoPi = 2.0f * kPi;
+
   double sampleRate = 44100.0;
   float frequency = 440.0f;
 

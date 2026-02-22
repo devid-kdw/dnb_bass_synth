@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <numbers>
 
 namespace dnb::dsp::osc {
 
@@ -16,12 +17,12 @@ public:
 
   void setFrequency(float newFrequency) {
     frequency = newFrequency;
-    phaseIncrement = static_cast<float>(frequency * (2.0 * M_PI / sampleRate));
+    phaseIncrement = frequency * (kTwoPi / static_cast<float>(sampleRate));
   }
 
   // Forcefully locks the start phase (according to limits::subPhaseLockDeg).
   void resetPhase(float startPhaseDegrees = 0.0f) {
-    currentPhase = startPhaseDegrees * static_cast<float>(M_PI / 180.0);
+    currentPhase = startPhaseDegrees * (kPi / 180.0f);
   }
 
   // Process a single sample
@@ -30,14 +31,17 @@ public:
     float output = std::sin(currentPhase);
 
     currentPhase += phaseIncrement;
-    if (currentPhase >= static_cast<float>(2.0 * M_PI)) {
-      currentPhase -= static_cast<float>(2.0 * M_PI);
+    if (currentPhase >= kTwoPi) {
+      currentPhase -= kTwoPi;
     }
 
     return output;
   }
 
 private:
+  static constexpr float kPi = std::numbers::pi_v<float>;
+  static constexpr float kTwoPi = 2.0f * kPi;
+
   double sampleRate = 44100.0;
   float frequency = 440.0f;
   float currentPhase = 0.0f;

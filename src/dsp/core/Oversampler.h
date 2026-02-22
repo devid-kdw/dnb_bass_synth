@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <vector>
 
 namespace dnb::dsp::core {
@@ -33,12 +34,12 @@ public:
       if (i == center) {
         firKernel[i] = 2.0f * cutoff;
       } else {
-        float x = static_cast<float>(M_PI) * (i - center);
+        float x = kPi * static_cast<float>(i - center);
         firKernel[i] = std::sin(2.0f * cutoff * x) / x;
       }
       // Blackman window
-      float window = 0.42f - 0.5f * std::cos(2.0f * static_cast<float>(M_PI) * i / (numTaps - 1)) +
-                     0.08f * std::cos(4.0f * static_cast<float>(M_PI) * i / (numTaps - 1));
+      float window = 0.42f - 0.5f * std::cos(2.0f * kPi * static_cast<float>(i) / (numTaps - 1)) +
+                     0.08f * std::cos(4.0f * kPi * static_cast<float>(i) / (numTaps - 1));
       firKernel[i] *= window;
       sum += firKernel[i];
     }
@@ -137,6 +138,8 @@ public:
   }
 
 private:
+  static constexpr float kPi = std::numbers::pi_v<float>;
+
   int factor = 4;
   double currentSampleRate = 44100.0;
   std::vector<float> upSampledBuffer;
