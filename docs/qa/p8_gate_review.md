@@ -1,6 +1,6 @@
 # P8 Gate Review (CI/CD Hardening)
 
-Date: 2026-02-22  
+Date: 2026-02-23  
 Owner: Orchestrator
 
 ## 1. Scope
@@ -56,15 +56,22 @@ Commands executed:
 | `F-P8-002` | Closed (implementation) | `.github/workflows/formatting.yml`, `tools/scripts/format.sh`, `tools/scripts/lint.sh`, `.clang-format`, `.clang-tidy` |
 
 ## 6. Gate Decision
-Decision: **REVIEW (Pending Cloud Evidence)**  
+Decision: **DONE**  
 Rationale:
-1. Required P8 remediation is implemented and locally validated.
-2. Final `Done` decision requires GitHub Actions cloud run evidence for new Windows and formatting/lint jobs.
+1. Required P8 remediation was implemented and locally validated.
+2. Cloud workflow matrix has now passed on required jobs.
 
-## 7. Required Final Step for P8 Done
-1. Run GitHub Actions workflows and confirm green status for:
-   - `ci` (including Windows backend gate)
-   - `formatting-and-lint`
-   - `release` (on tag, including Windows artifact/checksum path)
-2. Record run evidence in this file and then move P8 to `Done`.
+## 7. Cloud Evidence (Final Closure)
+Confirmed successful runs:
+1. `ci` success: `22285207932`
+   - URL: `https://github.com/devid-kdw/dnb_bass_synth/actions/runs/22285207932`
+2. `formatting-and-lint` success: `22285207924`
+   - URL: `https://github.com/devid-kdw/dnb_bass_synth/actions/runs/22285207924`
+3. `formatting-and-lint` latest success: `22285567254`
+   - URL: `https://github.com/devid-kdw/dnb_bass_synth/actions/runs/22285567254`
+4. `release` success: `22285567246`
+   - URL: `https://github.com/devid-kdw/dnb_bass_synth/actions/runs/22285567246`
 
+## 8. Closure Statement
+P8 is formally closed.  
+MVP version `0.8.0` is accepted as the first production-ready milestone under the active knowledge and project rules.

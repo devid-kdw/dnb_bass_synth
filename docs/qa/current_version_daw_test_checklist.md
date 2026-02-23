@@ -1,7 +1,7 @@
-# Trenutna Verzija - DAW Test Checklist i Ocekivanja
+# MVP 0.8.0 - DAW Test Checklist i Ocekivanja
 
-Datum: 2026-02-22  
-Scope: build nakon P7 post-gate DAW hotfix paketa (prije P8)
+Datum: 2026-02-23  
+Scope: zatvoreni MVP 0.8.0 build nakon P8 CI/CD closure
 
 ## 1. Sto je aktivno u ovoj verziji
 
@@ -126,8 +126,8 @@ Ocekivano:
 
 ## 6. Sto NE treba ocekivati u ovoj verziji
 
-1. Full release CI/CD workflow jos nije zatvoren (to je P8 scope).
-2. Vizualni panel nije metroloski analyzer (samo performansni/stilizirani feedback).
+1. Vizualni panel nije metroloski analyzer (samo performansni/stilizirani feedback).
+2. Ovo je MVP baseline, ne final V2 feature set.
 
 ## 7. Fail kriteriji (odmah prijaviti)
 

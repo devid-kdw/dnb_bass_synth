@@ -213,13 +213,31 @@ A phase is done only when:
 - decisions and deviations are documented (ADR when architecture-impacting)
 - code is ready for downstream agent integration without hidden assumptions
 
-## 6. Current Gate Backlog (P8 Review)
+## 6. Current Gate Backlog (P8 Closed)
 Status:
 - P6->P7 backlog is closed (`docs/qa/p6_to_p7_gate_deviations.md`, consolidated in `docs/qa/p6_final_gate_review.md`).
 - P7 remediation backlog is closed (`docs/qa/p7_fix_review.md`, accepted in `docs/qa/p7_final_gate_review.md`).
 - Post-gate DAW hotfix backlog is closed (`docs/qa/p7_post_gate_daw_hotfix_review.md`).
-- P8 handoffs are submitted and reviewed in `docs/qa/p8_gate_review.md`.
+- P8 handoffs are accepted and closed in `docs/qa/p8_gate_review.md`.
+- MVP closure record is published in `docs/qa/mvp_0_8_0_closure.md`.
 
 Current blockers before MVP RC:
-- no structural blocker remains after P8 remediation patch-set
-- final closure requires cloud CI evidence for new Windows + formatting/lint gates
+- none (MVP 0.8.0 gate is closed)
+
+## 7. Testing Campaign Kickoff (Post-MVP 0.8.0)
+Objective:
+- Run external DAW validation on the closed MVP build and collect structured feedback.
+
+Execution baseline:
+1. Functional smoke checks follow `docs/qa/current_version_daw_test_checklist.md`.
+2. Testers submit findings via `docs/qa/mvp_0_8_0_tester_feedback_form.md`.
+3. Orchestrator triages findings into:
+   - Critical: crash/data loss/no audio
+   - High: feature unusable/spec regression
+   - Medium: quality/UX issue with workaround
+   - Low: polish/documentation issue
+
+Exit criteria for campaign:
+1. Minimum target tester count reached (owner-defined).
+2. All Critical/High issues either fixed or explicitly deferred with rationale.
+3. P8.1/P9 backlog drafted from evidence-backed findings.
